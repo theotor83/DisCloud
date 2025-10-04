@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Upload New File</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+			--bg: #0f172a;
+			--fg: #f8fafc;
+			--card-bg: rgba(15, 23, 42, 0.85);
+			--accent: #38bdf8;
+			--accent-hover: #0ea5e9;
+			--muted: #94a3b8;
+			font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+			color: var(--fg);
+		}
+
+		.container {
+			width: min(520px, 92vw);
+			padding: 2.75rem 2.5rem;
+			background: var(--card-bg);
+			border: 1px solid rgba(148, 163, 184, 0.2);
+			border-radius: 1.25rem;
+			box-shadow: 0 18px 40px rgba(15, 23, 42, 0.4);
+			backdrop-filter: blur(12px);
+		}
+
+		h1 {
+			font-size: clamp(1.75rem, 2.8vw, 2.25rem);
+			margin: 0 0 1rem;
+			letter-spacing: -0.02em;
+		}
+
+		p.lead {
+			margin: 0 0 2rem;
+			color: var(--muted);
+			line-height: 1.6;
+		}
+
+		form {
+			display: flex;
+			flex-direction: column;
+			gap: 1.5rem;
+		}
+
+		.field {
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+		}
+
+		label {
+			font-weight: 600;
+			color: var(--fg);
+			letter-spacing: 0.01em;
+		}
+
+		input[type="file"] {
+			padding: 0.9rem 1.1rem;
+			background: rgba(15, 23, 42, 0.6);
+			border: 1px dashed rgba(148, 163, 184, 0.5);
+			border-radius: 0.9rem;
+			color: var(--muted);
+		}
+
+		input[type="file"]::file-selector-button {
+			margin-right: 1rem;
+			padding: 0.65rem 1.4rem;
+			border: none;
+			border-radius: 0.75rem;
+			background: var(--accent);
+			color: #020617;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background 0.2s ease;
+		}
+
+		input[type="file"]::file-selector-button:hover,
+		input[type="file"]::file-selector-button:focus-visible {
+			background: var(--accent-hover);
+		}
+
+		button {
+			align-self: flex-start;
+			padding: 0.9rem 2.2rem;
+			border: none;
+			border-radius: 0.9rem;
+			background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+			color: #020617;
+			font-weight: 700;
+			letter-spacing: 0.03em;
+			text-transform: uppercase;
+			cursor: pointer;
+			transition: transform 0.2s ease, box-shadow 0.2s ease;
+		}
+
+		button:hover,
+		button:focus-visible {
+			transform: translateY(-2px);
+			box-shadow: 0 12px 24px rgba(14, 165, 233, 0.35);
+		}
+
+		.message-stack {
+			display: grid;
+			gap: 0.75rem;
+			margin-bottom: 1.5rem;
+		}
+
+		.message {
+			padding: 0.9rem 1.1rem;
+			border-radius: 0.85rem;
+			font-weight: 500;
+		}
+
+		.message.success {
+			background: rgba(34, 197, 94, 0.15);
+			border: 1px solid rgba(34, 197, 94, 0.35);
+		}
+
+		.message.error {
+			background: rgba(248, 113, 113, 0.15);
+			border: 1px solid rgba(248, 113, 113, 0.35);
+		}
+
+		.secondary-link {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5rem;
+			margin-top: 2rem;
+			color: var(--accent);
+			font-weight: 600;
+			text-decoration: none;
+		}
+
+		.secondary-link:hover,
+		.secondary-link:focus-visible {
+			color: var(--accent-hover);
+		}
+
+		@media (max-width: 520px) {
+			.container {
+				padding: 2.25rem 1.75rem;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Upload New File</h1>
+		<p class="lead">Choose a file from your device to securely upload it to your DisCloud storage.</p>
+
+		{% if messages %}
+			<div class="message-stack">
+				{% for message in messages %}
+					<div class="message {{ message.tags|default:'' }}">{{ message }}</div>
+				{% endfor %}
+			</div>
+		{% endif %}
+
+		<form method="post" enctype="multipart/form-data">
+			{% csrf_token %}
+			<div class="field">
+				<label for="id_uploaded_file">Select file</label>
+				<input type="file" id="id_uploaded_file" name="uploaded_file" required>
+			</div>
+			<button type="submit">Upload file</button>
+		</form>
+
+		<a class="secondary-link" href="{% url 'files:list' %}">← Back to my files</a>
+	</div>
+</body>
+</html>
