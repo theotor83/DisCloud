@@ -1,3 +1,7 @@
+import discord
+import io
+import asyncio
+
 from .base import BaseStorageProvider
 
 class DiscordStorageProvider(BaseStorageProvider):
@@ -11,19 +15,24 @@ class DiscordStorageProvider(BaseStorageProvider):
         self.bot_token = self.config.get('bot_token')
         self.server_id = self.config.get('server_id')
         self.channel_id = self.config.get('channel_id')
-        self.thread_id = self.return_upload_information(config).get('thread_id')
-        # ... and so on
+        
+    def prepare_storage(self, file_metadata):
+        """
+        Creates a new Discord thread for the file upload and returns
+        the necessary metadata to be stored on the File object.
+        """
+        return asyncio.run(self._create_thread_async(file_metadata))
 
-    def return_upload_information(self, config):
-        """
-        Creates and return the thread URL used to upload the file chunks.
-        - Creates a new thread in the specified channel in the config.
-        - Returns the thread URL.
-        """
-        # return {
-        #     "upload_url": f"...",
-        #     "thread_id": thread_id,
-        # }
+    async def _create_thread_async(self, file_metadata):
+        try:
+            await self.client.login(self.bot_token)
+            channel = await self.client.fetch_channel(self.channel_id)
+            thread_name = f"File: {file_metadata.get('name', 'Untitled')}"
+            thread = await channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread)
+            return {"thread_id": thread.id}
+        finally:
+            if self.client.is_ready():
+                await self.client.close()
 
     def upload_chunk(self, encrypted_chunk, file_metadata):
         """

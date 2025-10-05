@@ -13,14 +13,6 @@ class BaseStorageProvider(ABC):
         self.config = config
 
     @abstractmethod
-    def return_upload_information(self):
-        """
-        Returns any information needed for the upload process.
-        This could include URLs, tokens, or other metadata.
-        """
-        pass
-
-    @abstractmethod
     def upload_chunk(self, encrypted_chunk, file_metadata):
         """
         Uploads a chunk of data and returns a provider-specific ID.

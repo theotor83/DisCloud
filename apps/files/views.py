@@ -6,6 +6,7 @@ def upload_file(request):
     """
     Handles the file upload process.
     - Receives the uploaded file as a stream.
+    - Instantiates the appropriate StorageProvider.
     - Uses the EncryptionService to encrypt the file chunk by chunk.
     - Uses the StorageService to upload the encrypted chunks to a storage provider.
     - Creates File and Chunk objects in the database.

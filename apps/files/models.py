@@ -10,6 +10,8 @@ class File(models.Model):
     description = models.TextField(blank=True)
     encryption_key = models.BinaryField() # Store the unique encryption key for this file
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    storage_provider = models.ForeignKey('storage_providers.StorageProvider', on_delete=models.PROTECT)
+    storage_metadata = models.JSONField(default=dict, blank=True)
 
     def get_decrypted_stream(self):
         """
@@ -26,6 +28,5 @@ class Chunk(models.Model):
     """
     file = models.ForeignKey(File, related_name='chunks', on_delete=models.CASCADE)
     chunk_order = models.IntegerField()
-    storage_provider = models.ForeignKey('storage_providers.StorageProvider', on_delete=models.CASCADE)
     # Store provider-specific details needed to retrieve the chunk
-    provider_chunk_id = models.CharField(max_length=255) # e.g., Discord message ID or thread ID
+    provider_chunk_id = models.JSONField() # e.g., Discord message ID for this chunk
