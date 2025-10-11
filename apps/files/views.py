@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import StreamingHttpResponse
 from .models import File
+from .repository import FileRepository
 
 def upload_file(request):
     """
@@ -27,7 +28,8 @@ def file_list(request):
     """
     Displays a list of all uploaded files.
     """
-    files = File.objects.all()
+    file_repository = FileRepository()
+    files = file_repository.list_files()
     return render(request, 'file_list.html', {'files': files})
 
 def file_detail(request, file_id):
@@ -46,7 +48,8 @@ def download_file(request, file_id):
     - Returns a StreamingHttpResponse to send the file to the user
       without loading it all into memory.
     """
-    file_instance = File.objects.get(pk=file_id)
+    file_repository = FileRepository()
+    file_instance = file_repository.get_file(file_id)
     response = StreamingHttpResponse(file_instance.get_decrypted_stream())
     response['Content-Disposition'] = f'attachment; filename="{file_instance.original_filename}"'
     return response
