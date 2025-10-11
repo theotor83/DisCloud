@@ -13,6 +13,14 @@ class File(models.Model):
     storage_provider = models.ForeignKey('storage_providers.StorageProvider', on_delete=models.PROTECT)
     storage_metadata = models.JSONField(default=dict, blank=True)
 
+    class Meta:
+        verbose_name = "File"
+        verbose_name_plural = "Files"
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.original_filename} ({self.uploaded_at.strftime('%Y-%m-%d %H:%M')})"
+
     def get_decrypted_stream(self):
         """
         Returns a generator that yields decrypted chunks of the file.
@@ -30,3 +38,12 @@ class Chunk(models.Model):
     chunk_order = models.IntegerField()
     # Store provider-specific details needed to retrieve the chunk
     provider_chunk_id = models.JSONField() # e.g., Discord message ID for this chunk
+
+    class Meta:
+        verbose_name = "Chunk"
+        verbose_name_plural = "Chunks"
+        ordering = ['file', 'chunk_order']
+        unique_together = [['file', 'chunk_order']]
+
+    def __str__(self):
+        return f"Chunk {self.chunk_order} of {self.file.original_filename}"
