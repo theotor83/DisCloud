@@ -1,6 +1,6 @@
 import os
 
-from storage_providers.providers.discord_provider import DiscordStorageProvider
+from apps.storage_providers.providers.discord_provider import DiscordStorageProvider
 from apps.storage_providers.models import StorageProvider
 from apps.storage_providers.repository import StorageProviderRepository
 

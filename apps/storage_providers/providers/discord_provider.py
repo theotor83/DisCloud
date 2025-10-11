@@ -1,6 +1,5 @@
-import discord
-import io
 import asyncio
+import aiohttp
 
 from .base import BaseStorageProvider
 
@@ -15,24 +14,63 @@ class DiscordStorageProvider(BaseStorageProvider):
         self.bot_token = self.config.get('bot_token')
         self.server_id = self.config.get('server_id')
         self.channel_id = self.config.get('channel_id')
-        
+        self.api_base = "https://discord.com/api/v10"
+
     def prepare_storage(self, file_metadata):
         """
         Creates a new Discord thread for the file upload and returns
         the necessary metadata to be stored on the File object.
         """
-        return asyncio.run(self._create_thread_async(file_metadata))
+        # Get or create a new event loop for this call
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        return loop.run_until_complete(self._create_thread_async(file_metadata))
 
     async def _create_thread_async(self, file_metadata):
+        """
+        Creates a thread in the configured channel using Discord's HTTP API.
+        """
         try:
-            await self.client.login(self.bot_token)
-            channel = await self.client.fetch_channel(self.channel_id)
-            thread_name = f"File: {file_metadata.get('name', 'Untitled')}"
-            thread = await channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread)
-            return {"thread_id": thread.id}
-        finally:
-            if self.client.is_ready():
-                await self.client.close()
+            filename = file_metadata.get('filename', 'Untitled')
+            thread_name = f"[FILE] {filename}"
+            
+            print(f"Creating Discord thread: {thread_name}")
+            
+            headers = {
+                "Authorization": f"Bot {self.bot_token}",
+                "Content-Type": "application/json"
+            }
+            
+            # https://discord.com/developers/docs/resources/channel#start-thread-without-message
+            url = f"{self.api_base}/channels/{self.channel_id}/threads"
+            payload = {
+                "name": thread_name,
+                "type": 11,  # PUBLIC_THREAD
+                "auto_archive_duration": 10080  # 7 days
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=payload, headers=headers) as response:
+                    if response.status == 201:
+                        data = await response.json()
+                        thread_id = data['id']
+                        print(f"Thread created successfully with ID: {thread_id}")
+                        return {"thread_id": thread_id}
+                    else:
+                        error_text = await response.text()
+                        print(f"Failed to create thread. Status: {response.status}, Error: {error_text}")
+                        return None
+        
+        except Exception as e:
+            print(f"An error occurred while creating the Discord thread: {e}")
+            return None
 
     def upload_chunk(self, encrypted_chunk, file_metadata):
         """
@@ -41,7 +79,6 @@ class DiscordStorageProvider(BaseStorageProvider):
         - Uploads the chunk to that thread.
         - Returns the thread ID as the provider_chunk_id.
         """
-        # Use a Discord bot library to interact with the Discord API
         pass
 
     def download_chunk(self, provider_chunk_id):
