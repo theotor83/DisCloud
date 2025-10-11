@@ -6,10 +6,13 @@ def upload_file(request):
     """
     Handles the file upload process.
     - Receives the uploaded file as a stream.
-    - Instantiates the appropriate StorageProvider.
-    - Uses the EncryptionService to encrypt the file chunk by chunk.
-    - Uses the StorageService to upload the encrypted chunks to a storage provider.
-    - Creates File and Chunk objects in the database.
+    - Instantiates the appropriate components: StorageService("discord_default"), EncryptionService(), FileRepository().
+    - Prepares the files for upload (e.g., generates key, fills provider metadata).
+    - Creates a new File object in the database using the FileRepository.
+    - For each chunk of the file:
+    -   Uses the EncryptionService to encrypt the file chunk by chunk.
+    -   Uses the StorageService to upload the encrypted chunks to a storage provider.
+    -   Creates the Chunk objects in the database.
     """
     if request.method == 'POST':
         # Process the uploaded file in chunks to handle large files.
