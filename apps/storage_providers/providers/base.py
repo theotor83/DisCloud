@@ -15,13 +15,15 @@ class BaseStorageProvider(ABC):
     @abstractmethod
     def upload_chunk(self, encrypted_chunk, file_metadata):
         """
-        Uploads a chunk of data and returns a provider-specific ID.
+        Uploads a chunk of data and returns a provider-specific ID,
+        alongside file metadata needed for future retrieval.
         """
         pass
 
     @abstractmethod
-    def download_chunk(self, provider_chunk_id):
+    def download_chunk(self, provider_chunk_id, file_metadata):
         """
-        Downloads a chunk of data given its provider-specific ID.
+        Downloads a chunk of data given its provider-specific ID,
+        and any necessary file metadata.
         """
         pass

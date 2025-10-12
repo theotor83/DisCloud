@@ -75,16 +75,19 @@ class DiscordStorageProvider(BaseStorageProvider):
     def upload_chunk(self, encrypted_chunk, file_metadata):
         """
         Implements the logic to upload a file chunk to a Discord thread.
-        - Creates a new thread in the specified channel.
-        - Uploads the chunk to that thread.
-        - Returns the thread ID as the provider_chunk_id.
+        - Gets the thread ID from the file_metadata.
+        - Uploads the chunk to the thread.
+        - Returns a dictionary containing the provider chunk id, message 
+          ID, and maybe message URL, message attachment ID, etc that would
+          be useful for downloading later.
         """
         pass
 
-    def download_chunk(self, provider_chunk_id):
+    def download_chunk(self, provider_chunk_id, file_metadata):
         """
         Implements the logic to download a file chunk from a Discord thread.
-        - Fetches the message history of the thread with the given ID.
+        - Gets message URL or another way of downloading from the 
+          file_metadata.
         - Downloads the attachment from the message.
         """
         pass
