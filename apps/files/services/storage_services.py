@@ -1,11 +1,6 @@
-from apps.storage_providers.providers.discord_provider import DiscordStorageProvider # Add more providers as needed
+from apps.storage_providers.providers import PROVIDER_REGISTRY
 from apps.storage_providers.repository import StorageProviderRepository
 from apps.files.exceptions import StorageUploadError, StorageDownloadError
-
-PROVIDER_REGISTRY = {
-    "Discord": DiscordStorageProvider,
-    # Future providers added here
-}
 
 class StorageService:
     """

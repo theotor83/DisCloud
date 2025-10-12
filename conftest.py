@@ -6,6 +6,7 @@ from unittest.mock import Mock, MagicMock
 from django.core.files.uploadedfile import SimpleUploadedFile
 from apps.storage_providers.models import StorageProvider
 from apps.files.models import File, Chunk
+from apps.storage_providers.providers import PLATFORM_DISCORD
 
 
 @pytest.fixture
@@ -24,7 +25,7 @@ def discord_provider(mock_discord_config):
     """Creates a Discord StorageProvider in the test database."""
     provider = StorageProvider.objects.create(
         name='test_discord',
-        platform='Discord',
+        platform=PLATFORM_DISCORD,
         is_active=True,
         config=mock_discord_config
     )

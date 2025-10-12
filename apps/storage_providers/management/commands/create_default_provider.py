@@ -1,6 +1,7 @@
 import os
 from django.core.management.base import BaseCommand
 from apps.storage_providers.models import StorageProvider
+from apps.storage_providers.providers import PLATFORM_DISCORD
 
 class Command(BaseCommand):
     help = 'Creates a default Discord storage provider if it does not exist'
@@ -15,7 +16,7 @@ class Command(BaseCommand):
 
         provider, created = StorageProvider.objects.get_or_create(
             name="discord_default",
-            platform="Discord",
+            platform=PLATFORM_DISCORD,
             defaults={
                 "config": {
                     "bot_token": BOT_TOKEN,

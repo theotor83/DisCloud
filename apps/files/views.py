@@ -14,6 +14,11 @@ def upload_file(request):
     -   Uses the EncryptionService to encrypt the file chunk by chunk.
     -   Uses the StorageService to upload the encrypted chunks to a storage provider.
     -   Creates the Chunk objects in the database.
+
+    Notes: 
+    - Ensure that the entire file is not loaded into memory at once to handle large files efficiently.
+    - Handle errors gracefully, ensuring that partial uploads do not leave orphaned database records.
+      (use transactions.atomic() where appropriate)
     """
     if request.method == 'POST':
         # Process the uploaded file in chunks to handle large files.

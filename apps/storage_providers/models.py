@@ -1,9 +1,5 @@
 from django.db import models
-
-PLATFORM_CHOICES = [
-    ('Discord', 'Discord'),
-    # Add other platforms as needed
-]
+from apps.storage_providers.providers import PLATFORM_CHOICES
 
 class StorageProvider(models.Model):
     """
