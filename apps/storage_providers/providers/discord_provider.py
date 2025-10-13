@@ -14,7 +14,11 @@ class DiscordStorageProvider(BaseStorageProvider):
         self.bot_token = self.config.get('bot_token')
         self.server_id = self.config.get('server_id')
         self.channel_id = self.config.get('channel_id')
+
+        self.max_chunk_size = self.config.get('max_chunk_size', 8 * 1024 * 1024)  # Default to 8MB instead of 10MB for overhead
+
         self.api_base = "https://discord.com/api/v10"
+
 
     def prepare_storage(self, file_metadata):
         """
@@ -81,7 +85,75 @@ class DiscordStorageProvider(BaseStorageProvider):
           ID, and maybe message URL, message attachment ID, etc that would
           be useful for downloading later.
         """
-        pass
+        # Get or create a new event loop for this call
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        return loop.run_until_complete(self._upload_chunk_async(encrypted_chunk, file_metadata.get("thread_id")))
+
+    async def _upload_chunk_async(self, encrypted_chunk, thread_id):
+        """
+        Uploads a chunk to the specified Discord thread using the Discord API.
+
+        Args:
+            encrypted_chunk: The bytes of the encrypted file chunk
+            file_metadata: Dictionary containing at least {"thread_id": "123456789"}
+        
+        Returns:
+            Dictionary with upload data response or None on failure
+        """
+        if not thread_id:
+            raise ValueError("No thread_id provided in file_metadata")
+        
+        print(f"Starting upload to thread: {thread_id}")
+        print(f"Chunk size: {len(encrypted_chunk)} bytes")
+        
+        try:
+            headers = {
+                "Authorization": f"Bot {self.bot_token}"
+            }
+            
+            url = f"{self.api_base}/channels/{thread_id}/messages"
+    
+            form = aiohttp.FormData()
+            form.add_field(
+                'files[0]',
+                encrypted_chunk,
+                filename='chunk.enc',
+                content_type='application/octet-stream'
+            )
+            
+            payload_json = {}
+            form.add_field('payload_json', aiohttp.JsonPayload(payload_json))
+            
+            async with aiohttp.ClientSession() as session:
+                print("Sending POST request to Discord API...")
+                async with session.post(url, data=form, headers=headers) as response:
+                    response_status = response.status
+                    response_text = await response.text()
+                    if response_status == 200:
+                        data = await response.json()
+
+                        # Rename 'id' to 'message_id' for clarity
+                        if "id" in data:
+                            data["message_id"] = data.pop("id")
+                        # Include thread_id for reference (this could be optional)
+                        data["thread_id"] = thread_id
+
+                        return data
+                    else:
+                        print(f"Upload failed with status {response_status}")
+                        return None
+        
+        except Exception as e:
+            print(f"Exception occurred during upload: {type(e).__name__}: {e}")
+            return None
 
     def download_chunk(self, provider_chunk_id, file_metadata):
         """

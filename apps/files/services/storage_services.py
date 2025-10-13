@@ -76,3 +76,10 @@ class StorageService:
             raise
         except Exception as e:
             raise StorageDownloadError(f"Failed to download chunk: {str(e)}") from e
+    
+    def get_max_chunk_size(self):
+        """
+        Returns the maximum chunk size supported by the provider.
+        This is used by the upload view to determine how to slice the file stream.
+        """
+        return getattr(self.provider, 'max_chunk_size', 8 * 1024 * 1024)  # Default 8MB
