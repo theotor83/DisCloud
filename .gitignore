@@ -20,3 +20,5 @@ env/
 .idea/
 .vscode/
 .github/
+
+_ignore_*
