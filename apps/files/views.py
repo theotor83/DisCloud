@@ -1,15 +1,15 @@
 from django.shortcuts import render
 from django.http import StreamingHttpResponse
 from .models import File
-from .repository import FileRepository
+from .repository import FileRepositoryDjango
 
 def upload_file(request):
     """
     Handles the file upload process.
     - Receives the uploaded file as a stream.
-    - Instantiates the appropriate components: StorageService("discord_default"), EncryptionService(), FileRepository().
+    - Instantiates the appropriate components: StorageService("discord_default"), EncryptionService(), FileRepositoryDjango().
     - Prepares the files for upload (e.g., generates key, fills provider metadata).
-    - Creates a new File object in the database using the FileRepository.
+    - Creates a new File object in the database using the FileRepositoryDjango.
     - For each chunk of the file:
     -   Uses the EncryptionService to encrypt the file chunk by chunk.
     -   Uses the StorageService to upload the encrypted chunks to a storage provider.
@@ -33,7 +33,7 @@ def file_list(request):
     """
     Displays a list of all uploaded files.
     """
-    file_repository = FileRepository()
+    file_repository = FileRepositoryDjango()
     files = file_repository.list_files()
     return render(request, 'file_list.html', {'files': files})
 
@@ -53,7 +53,7 @@ def download_file(request, file_id):
     - Returns a StreamingHttpResponse to send the file to the user
       without loading it all into memory.
     """
-    file_repository = FileRepository()
+    file_repository = FileRepositoryDjango()
     file_instance = file_repository.get_file(file_id)
     response = StreamingHttpResponse(file_instance.get_decrypted_stream())
     response['Content-Disposition'] = f'attachment; filename="{file_instance.original_filename}"'

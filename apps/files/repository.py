@@ -1,13 +1,71 @@
+from abc import ABC, abstractmethod
 from .models import File, Chunk
 
-class FileRepository:
+
+class BaseFileRepository(ABC):
     """
-    Repository class for managing File and Chunk objects.
+    Abstract base class for file repository implementations.
+    Defines the contract for managing File and Chunk objects.
+    """
+
+    @abstractmethod
+    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_metadata):
+        """
+        Creates and returns a new File object.
+        """
+        pass
+
+    @abstractmethod
+    def get_file(self, file_id):
+        """
+        Retrieves a File object by its ID.
+        """
+        pass
+
+    @abstractmethod
+    def list_files(self):
+        """
+        Returns a queryset or list of all File objects.
+        """
+        pass
+
+    @abstractmethod
+    def update_file(self, file_id, **kwargs):
+        """
+        Updates fields of a File object.
+        Accepts keyword arguments for fields to be updated.
+        """
+        pass
+
+    @abstractmethod
+    def delete_file(self, file_id):
+        """
+        Deletes a File object by its ID.
+        """
+        pass
+
+    @abstractmethod
+    def create_chunk(self, file_instance, chunk_order, provider_chunk_id):
+        """
+        Creates and returns a new Chunk object associated with the given File.
+        """
+        pass
+
+    @abstractmethod
+    def list_chunks(self, file_instance):
+        """
+        Returns a queryset or list of all Chunk objects associated with the given File.
+        """
+        pass
+
+
+class FileRepositoryDjango(BaseFileRepository):
+    """
+    Django ORM implementation of the BaseFileRepository.
     Encapsulates all database interactions related to files and their chunks.
     """
 
-    @staticmethod
-    def create_file(original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_metadata):
+    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_metadata):
         """
         Creates and returns a new File object.
         """
@@ -21,37 +79,32 @@ class FileRepository:
         )
         return file_instance
 
-    @staticmethod
-    def get_file(file_id):
+    def get_file(self, file_id):
         """
         Retrieves a File object by its ID.
         """
         return File.objects.get(pk=file_id)
 
-    @staticmethod
-    def list_files():
+    def list_files(self):
         """
         Returns a queryset of all File objects.
         """
         return File.objects.all()
 
-    @staticmethod
-    def update_file(file_id, **kwargs):
+    def update_file(self, file_id, **kwargs):
         """
         Updates fields of a File object.
         Accepts keyword arguments for fields to be updated.
         """
         File.objects.filter(pk=file_id).update(**kwargs)
 
-    @staticmethod
-    def delete_file(file_id):
+    def delete_file(self, file_id):
         """
         Deletes a File object by its ID.
         """
         File.objects.filter(pk=file_id).delete()
 
-    @staticmethod
-    def create_chunk(file_instance, chunk_order, provider_chunk_id):
+    def create_chunk(self, file_instance, chunk_order, provider_chunk_id):
         """
         Creates and returns a new Chunk object associated with the given File.
         """
@@ -62,8 +115,7 @@ class FileRepository:
         )
         return chunk_instance
 
-    @staticmethod
-    def list_chunks(file_instance):
+    def list_chunks(self, file_instance):
         """
         Returns a queryset of all Chunk objects associated with the given File.
         """

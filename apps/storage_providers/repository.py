@@ -1,12 +1,48 @@
 import logging
 from .models import StorageProvider
 from apps.storage_providers.providers import PLATFORM_CHOICES
+from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
-class StorageProviderRepository:
+class BaseStorageProviderRepository(ABC):
     """
-    A repository class to manage storage provider records.
+    Abstract base class for storage provider repository implementations.
+    Defines the contract for managing StorageProvider objects.
+    """
+
+    @abstractmethod
+    def get_provider_by_id(self, provider_id):
+        """
+        Fetch a storage provider by its ID.
+        """
+        pass
+
+    @abstractmethod
+    def get_provider_by_name(self, name):
+        """
+        Fetch a storage provider by its name.
+        """
+        pass
+
+    @abstractmethod
+    def list_providers(self):
+        """
+        List all storage providers.
+        """
+        pass
+
+    @abstractmethod
+    def create_provider(self, name, platform, config):
+        """
+        Create a new storage provider.
+        """
+        pass
+
+class StorageProviderRepositoryDjango(BaseStorageProviderRepository):
+    """
+    Django ORM implementation of the BaseStorageProviderRepository.
+    Encapsulates all database interactions related to storage providers.
     """
 
     def __init__(self):

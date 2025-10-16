@@ -1,5 +1,5 @@
 from apps.storage_providers.providers import PROVIDER_REGISTRY
-from apps.storage_providers.repository import StorageProviderRepository
+from apps.storage_providers.repository import StorageProviderRepositoryDjango
 from apps.files.exceptions import StorageUploadError, StorageDownloadError
 
 class StorageService:
@@ -13,7 +13,7 @@ class StorageService:
         Initializes the service with a specific provider, given its name.
         """
         if provider_repository is None:
-            provider_repository = StorageProviderRepository()
+            provider_repository = StorageProviderRepositoryDjango()
 
         provider = provider_repository.get_provider_by_name(provider_name)
         if not provider:
