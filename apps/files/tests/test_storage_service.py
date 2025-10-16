@@ -15,7 +15,7 @@ class TestStorageService:
 
     def test_init_with_discord_provider(self, discord_provider):
         """Test initializing StorageService with a Discord provider."""
-        with patch('apps.files.services.storage_services.DiscordStorageProvider') as MockProvider:
+        with patch('apps.storage_providers.providers.discord_provider.DiscordStorageProvider') as MockProvider:
             service = StorageService('test_discord')
             
             # Verify the provider was instantiated with the correct config
@@ -33,7 +33,6 @@ class TestStorageService:
         unsupported = StorageProvider.objects.create(
             name='unsupported_provider',
             platform='UnsupportedPlatform',
-            is_active=True,
             config={}
         )
         
@@ -42,7 +41,7 @@ class TestStorageService:
 
     def test_upload_chunk_delegates_to_provider(self, discord_provider):
         """Test that upload_chunk delegates to the provider's upload_chunk method."""
-        with patch('apps.files.services.storage_services.DiscordStorageProvider') as MockProvider:
+        with patch('apps.storage_providers.providers.discord_provider.DiscordStorageProvider') as MockProvider:
             mock_instance = MockProvider.return_value
             mock_instance.upload_chunk.return_value = {'message_id': '123456789'}
             
@@ -58,7 +57,7 @@ class TestStorageService:
 
     def test_download_chunk_delegates_to_provider(self, discord_provider):
         """Test that download_chunk delegates to the provider's download_chunk method."""
-        with patch('apps.files.services.storage_services.DiscordStorageProvider') as MockProvider:
+        with patch('apps.storage_providers.providers.discord_provider.DiscordStorageProvider') as MockProvider:
             mock_instance = MockProvider.return_value
             mock_instance.download_chunk.return_value = b'encrypted_chunk_data'
             
@@ -73,7 +72,7 @@ class TestStorageService:
 
     def test_provider_instance_cached(self, discord_provider):
         """Test that the provider instance is cached and reused."""
-        with patch('apps.files.services.storage_services.DiscordStorageProvider') as MockProvider:
+        with patch('apps.storage_providers.providers.discord_provider.DiscordStorageProvider') as MockProvider:
             service = StorageService('test_discord')
             
             # Access the provider multiple times
@@ -93,7 +92,7 @@ class TestStorageServiceIntegration:
     @pytest.mark.django_db
     def test_full_upload_download_flow(self, discord_provider, mock_aiohttp_response):
         """Test a complete upload and download flow with mocked Discord API."""
-        with patch('apps.files.services.storage_services.DiscordStorageProvider') as MockProvider:
+        with patch('apps.storage_providers.providers.discord_provider.DiscordStorageProvider') as MockProvider:
             # Setup mock provider behavior
             mock_instance = MockProvider.return_value
             
@@ -126,7 +125,7 @@ class TestStorageServiceIntegration:
     @pytest.mark.django_db
     def test_multiple_chunks_upload(self, discord_provider):
         """Test uploading multiple chunks sequentially."""
-        with patch('apps.files.services.storage_services.DiscordStorageProvider') as MockProvider:
+        with patch('apps.storage_providers.providers.discord_provider.DiscordStorageProvider') as MockProvider:
             mock_instance = MockProvider.return_value
             
             # Mock provider to return different IDs for each chunk
@@ -153,7 +152,7 @@ class TestStorageServiceIntegration:
     @pytest.mark.django_db
     def test_error_handling_on_upload_failure(self, discord_provider):
         """Test that upload errors are properly propagated."""
-        with patch('apps.files.services.storage_services.DiscordStorageProvider') as MockProvider:
+        with patch('apps.storage_providers.providers.discord_provider.DiscordStorageProvider') as MockProvider:
             mock_instance = MockProvider.return_value
             mock_instance.upload_chunk.side_effect = Exception("Network error")
             
@@ -165,7 +164,7 @@ class TestStorageServiceIntegration:
     @pytest.mark.django_db
     def test_error_handling_on_download_failure(self, discord_provider):
         """Test that download errors are properly propagated."""
-        with patch('apps.files.services.storage_services.DiscordStorageProvider') as MockProvider:
+        with patch('apps.storage_providers.providers.discord_provider.DiscordStorageProvider') as MockProvider:
             mock_instance = MockProvider.return_value
             mock_instance.download_chunk.side_effect = Exception("Chunk not found")
             

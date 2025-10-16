@@ -20,7 +20,6 @@ class StorageProviderFactory(DjangoModelFactory):
     
     name = factory.Sequence(lambda n: f'test_provider_{n}')
     platform = 'Discord'
-    is_active = True
     config = factory.LazyFunction(lambda: {
         'bot_token': fake.uuid4(),
         'server_id': fake.numerify(text='##################'),

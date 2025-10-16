@@ -26,7 +26,6 @@ def discord_provider(mock_discord_config):
     provider = StorageProvider.objects.create(
         name='test_discord',
         platform=PLATFORM_DISCORD,
-        is_active=True,
         config=mock_discord_config
     )
     return provider

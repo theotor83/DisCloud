@@ -21,7 +21,7 @@ class TestFileListView:
 
     def test_file_list_empty(self):
         """Test file list view when no files exist."""
-        response = self.client.get('/files/')
+        response = self.client.get('/')
         
         assert response.status_code == 200
         assert 'files' in response.context
@@ -29,7 +29,7 @@ class TestFileListView:
 
     def test_file_list_with_files(self, sample_file):
         """Test file list view displays uploaded files."""
-        response = self.client.get('/files/')
+        response = self.client.get('/')
         
         assert response.status_code == 200
         assert 'files' in response.context
@@ -52,7 +52,7 @@ class TestFileListView:
             storage_provider=discord_provider
         )
         
-        response = self.client.get('/files/')
+        response = self.client.get('/')
         files = response.context['files']
         
         # Newest first
@@ -61,7 +61,7 @@ class TestFileListView:
 
     def test_file_list_template_used(self):
         """Test that the correct template is used."""
-        response = self.client.get('/files/')
+        response = self.client.get('/')
         
         assert response.status_code == 200
         assert 'file_list.html' in [t.name for t in response.templates]
@@ -84,7 +84,7 @@ class TestUploadView:
 
     @patch('apps.files.views.StorageService')
     @patch('apps.files.views.EncryptionService')
-    @patch('apps.files.views.FileRepository')
+    @patch('apps.files.views.FileRepositoryDjango')
     def test_upload_post_request(self, MockFileRepo, MockEncryption, MockStorage, 
                                   discord_provider, uploaded_file):
         """Test POST request to upload a file."""
@@ -135,7 +135,7 @@ class TestDownloadView:
         # Mock the decrypted stream
         mock_get_stream.return_value = [b'chunk1', b'chunk2', b'chunk3']
         
-        response = self.client.get(f'/files/{sample_file.id}/download/')
+        response = self.client.get(f'/file/{sample_file.id}/download/')
         
         assert response.status_code == 200
         assert response['Content-Disposition'] == f'attachment; filename="{sample_file.original_filename}"'
@@ -145,7 +145,7 @@ class TestDownloadView:
 
     def test_download_nonexistent_file(self):
         """Test downloading a file that doesn't exist."""
-        response = self.client.get('/files/99999/download/')
+        response = self.client.get('/file/99999/download/')
         
         # Should return 404
         assert response.status_code == 404
@@ -155,7 +155,7 @@ class TestDownloadView:
         """Test that download uses StreamingHttpResponse."""
         mock_get_stream.return_value = [b'data']
         
-        response = self.client.get(f'/files/{sample_file.id}/download/')
+        response = self.client.get(f'/file/{sample_file.id}/download/')
         
         # Check response type
         assert response.streaming
@@ -172,7 +172,7 @@ class TestFileDetailView:
 
     def test_file_detail_view(self, sample_file):
         """Test viewing file details."""
-        response = self.client.get(f'/files/{sample_file.id}/')
+        response = self.client.get(f'/file/{sample_file.id}/')
         
         # Note: Adjust based on actual implementation
         # Currently file_detail view is not fully implemented
@@ -180,7 +180,7 @@ class TestFileDetailView:
 
     def test_file_detail_nonexistent(self):
         """Test viewing details of non-existent file."""
-        response = self.client.get('/files/99999/')
+        response = self.client.get('/file/99999/')
         
         assert response.status_code == 404
 
@@ -206,14 +206,14 @@ class TestCompleteUploadDownloadFlow:
         # This test would:
         # 1. Upload a file via POST to /upload/
         # 2. Verify file is created in database
-        # 3. Download the file via GET to /files/{id}/download/
+        # 3. Download the file via GET to /file/{id}/download/
         # 4. Verify downloaded content matches original
         
         # For now, just verify the endpoints exist
         upload_response = self.client.get('/upload/')
         assert upload_response.status_code == 200
         
-        list_response = self.client.get('/files/')
+        list_response = self.client.get('/')
         assert list_response.status_code == 200
 
     @patch('apps.files.models.File.get_decrypted_stream')
@@ -228,7 +228,7 @@ class TestCompleteUploadDownloadFlow:
             b'chunk_2_data'
         ]
         
-        response = self.client.get(f'/files/{sample_file.id}/download/')
+        response = self.client.get(f'/file/{sample_file.id}/download/')
         
         assert response.status_code == 200
         mock_get_stream.assert_called_once()
@@ -241,7 +241,7 @@ class TestCompleteUploadDownloadFlow:
 
     def test_list_shows_upload_link(self):
         """Test that file list page provides link to upload."""
-        response = self.client.get('/files/')
+        response = self.client.get('/')
         
         assert response.status_code == 200
         # Template should have link to upload page
@@ -256,7 +256,7 @@ class TestViewErrorHandling:
         """Set up test client."""
         self.client = Client()
 
-    @patch('apps.files.views.FileRepository')
+    @patch('apps.files.views.FileRepositoryDjango')
     def test_upload_with_storage_error(self, MockFileRepo, uploaded_file):
         """Test upload when storage service raises an error."""
         # Mock repository to raise an exception
@@ -276,7 +276,7 @@ class TestViewErrorHandling:
         # Mock get_decrypted_stream to raise an exception
         mock_get_stream.side_effect = Exception("Decryption failed")
         
-        response = self.client.get(f'/files/{sample_file.id}/download/')
+        response = self.client.get(f'/file/{sample_file.id}/download/')
         
         # Should handle error (500 or custom error page)
         assert response.status_code in [500, 404]
