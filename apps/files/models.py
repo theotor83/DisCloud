@@ -21,13 +21,14 @@ class File(models.Model):
     def __str__(self):
         return f"{self.original_filename} ({self.uploaded_at.strftime('%Y-%m-%d %H:%M')})"
 
-    def get_decrypted_stream(self):
-        """
-        Returns a generator that yields decrypted chunks of the file.
-        This method will use the StorageService to fetch encrypted chunks
-        and the EncryptionService to decrypt them on the fly.
-        """
-        pass
+    # Deprecated, now handled by FileService
+    # def get_decrypted_stream(self):
+    #     """
+    #     Returns a generator that yields decrypted chunks of the file.
+    #     This method will use the StorageService to fetch encrypted chunks
+    #     and the EncryptionService to decrypt them on the fly.
+    #     """
+    #     pass
 
 class Chunk(models.Model):
     """

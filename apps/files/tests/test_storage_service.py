@@ -5,7 +5,7 @@ These tests use mocks to avoid actual network calls to storage providers.
 """
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from apps.files.services.storage_services import StorageService
+from apps.files.services.storage_service import StorageService
 from apps.storage_providers.models import StorageProvider
 
 
