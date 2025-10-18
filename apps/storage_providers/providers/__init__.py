@@ -1,5 +1,5 @@
 from .base import BaseStorageProvider
-from .discord_provider import DiscordStorageProvider
+from .discord.discord_provider import DiscordStorageProvider
 # Add more providers as needed
 
 # Platform constants

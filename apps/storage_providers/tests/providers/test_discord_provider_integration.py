@@ -30,7 +30,7 @@ These tests verify:
 import os
 import pytest
 import asyncio
-from apps.storage_providers.providers.discord_provider import DiscordStorageProvider
+from apps.storage_providers.providers.discord.discord_provider import DiscordStorageProvider
 
 
 # Skip these tests unless explicitly requested or credentials are available

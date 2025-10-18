@@ -2,7 +2,8 @@ import asyncio
 import aiohttp
 import logging
 
-from .base import BaseStorageProvider
+from ..base import BaseStorageProvider
+from .discord_validator import DiscordConfigValidator
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,10 @@ class DiscordStorageProvider(BaseStorageProvider):
 
     def __init__(self, config):
         super().__init__(config)
+        # Validate the config, because the bot token might expire.
+        validator = DiscordConfigValidator(config)
+        if not validator.validate():
+            raise ValueError("Invalid Discord storage provider configuration")
         # Initialize the Discord bot client using the provided config
         self.bot_token = self.config.get('bot_token')
         self.server_id = self.config.get('server_id')

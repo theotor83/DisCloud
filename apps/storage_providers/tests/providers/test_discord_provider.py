@@ -7,7 +7,7 @@ import pytest
 import asyncio
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from aioresponses import aioresponses
-from apps.storage_providers.providers.discord_provider import DiscordStorageProvider
+from apps.storage_providers.providers.discord.discord_provider import DiscordStorageProvider
 
 
 @pytest.mark.unit
