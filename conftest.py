@@ -110,3 +110,11 @@ def mock_encryption_service():
     mock_service.encrypt_chunk.return_value = b'encrypted_chunk_data'
     mock_service.decrypt_chunk.return_value = b'decrypted_chunk_data'
     return mock_service
+
+
+@pytest.fixture
+def mock_discord_validator():
+    """Returns a mock Discord validator that always validates successfully."""
+    mock = Mock()
+    mock.validate = Mock(return_value=True)
+    return mock

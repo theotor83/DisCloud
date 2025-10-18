@@ -29,7 +29,7 @@ These tests verify:
 """
 import os
 import pytest
-import asyncio
+import time
 from apps.storage_providers.providers.discord.discord_provider import DiscordStorageProvider
 
 
@@ -52,8 +52,7 @@ def real_discord_config():
 
 @pytest.mark.real_api
 @pytest.mark.slow
-@pytest.mark.asyncio
-async def test_real_thread_creation(real_discord_config):
+def test_real_thread_creation(real_discord_config):
     """
     Test creating a real Discord thread.
     
@@ -63,10 +62,10 @@ async def test_real_thread_creation(real_discord_config):
     - Thread creation actually works
     - Discord's API behaves as expected
     """
-    provider = DiscordStorageProvider(real_discord_config)
+    provider = DiscordStorageProvider(real_discord_config, skip_validation=True)
     
     file_metadata = {'filename': 'integration_test_file.txt'}
-    result = await provider._create_thread_async(file_metadata)
+    result = provider.prepare_storage(file_metadata)
     
     # Verify we got a real thread ID back
     assert result is not None
@@ -78,13 +77,12 @@ async def test_real_thread_creation(real_discord_config):
 
 @pytest.mark.real_api
 @pytest.mark.slow
-@pytest.mark.asyncio
-async def test_real_thread_creation_with_special_characters(real_discord_config):
+def test_real_thread_creation_with_special_characters(real_discord_config):
     """Test thread creation with filename containing special characters."""
-    provider = DiscordStorageProvider(real_discord_config)
+    provider = DiscordStorageProvider(real_discord_config, skip_validation=True)
     
     file_metadata = {'filename': 'test_file_@#$%_2024.pdf'}
-    result = await provider._create_thread_async(file_metadata)
+    result = provider.prepare_storage(file_metadata)
     
     assert result is not None
     assert 'thread_id' in result
@@ -96,7 +94,7 @@ async def test_real_thread_creation_with_special_characters(real_discord_config)
 @pytest.mark.slow
 def test_real_prepare_storage_sync(real_discord_config):
     """Test the synchronous prepare_storage method with real API."""
-    provider = DiscordStorageProvider(real_discord_config)
+    provider = DiscordStorageProvider(real_discord_config, skip_validation=True)
     
     file_metadata = {'filename': 'sync_integration_test.txt'}
     result = provider.prepare_storage(file_metadata)
@@ -109,8 +107,7 @@ def test_real_prepare_storage_sync(real_discord_config):
 
 @pytest.mark.real_api
 @pytest.mark.slow
-@pytest.mark.asyncio
-async def test_real_invalid_credentials():
+def test_real_invalid_credentials():
     """Test that invalid credentials are properly rejected."""
     invalid_config = {
         'bot_token': 'invalid_token_123',
@@ -118,35 +115,34 @@ async def test_real_invalid_credentials():
         'channel_id': '987654321'
     }
     
-    provider = DiscordStorageProvider(invalid_config)
+    provider = DiscordStorageProvider(invalid_config, skip_validation=True)
     
     file_metadata = {'filename': 'test.txt'}
-    result = await provider._create_thread_async(file_metadata)
     
-    # Should fail with invalid credentials
-    assert result is None
+    # Should raise an exception with invalid credentials
+    with pytest.raises(Exception):  # Will raise StorageUploadError
+        provider.prepare_storage(file_metadata)
     
     print("✅ Invalid credentials properly rejected")
 
 
 @pytest.mark.real_api
 @pytest.mark.slow
-@pytest.mark.asyncio
-async def test_real_multiple_threads(real_discord_config):
+def test_real_multiple_threads(real_discord_config):
     """Test creating multiple threads in succession."""
-    provider = DiscordStorageProvider(real_discord_config)
+    provider = DiscordStorageProvider(real_discord_config, skip_validation=True)
     
     threads = []
     for i in range(3):
         file_metadata = {'filename': f'multi_test_file_{i}.txt'}
-        result = await provider._create_thread_async(file_metadata)
+        result = provider.prepare_storage(file_metadata)
         
         assert result is not None
         assert 'thread_id' in result
         threads.append(result['thread_id'])
         
         # Small delay to avoid rate limiting
-        await asyncio.sleep(1)
+        time.sleep(1)
     
     # Verify all thread IDs are unique
     assert len(set(threads)) == 3
@@ -163,15 +159,14 @@ class TestRealDiscordProviderEndToEnd:
     These test the complete flow but are expensive and slow.
     """
     
-    @pytest.mark.asyncio
-    async def test_complete_file_upload_flow(self, real_discord_config):
+    def test_complete_file_upload_flow(self, real_discord_config):
         """
         Test complete flow: prepare storage -> upload chunk.
         
         NOTE: This will be completed when upload_chunk is implemented.
         For now, we test what's available.
         """
-        provider = DiscordStorageProvider(real_discord_config)
+        provider = DiscordStorageProvider(real_discord_config, skip_validation=True)
         
         # Step 1: Prepare storage (create thread)
         file_metadata = {'filename': 'e2e_test_file.bin'}

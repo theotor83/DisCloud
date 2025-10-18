@@ -8,9 +8,14 @@ class StorageService:
     It delegates the actual upload/download operations to the specific provider's implementation.
     """
 
-    def __init__(self, provider_name, provider_repository=None):
+    def __init__(self, provider_name, provider_repository=None, skip_validation=False):
         """
         Initializes the service with a specific provider, given its name.
+        
+        Args:
+            provider_name: Name of the storage provider to use
+            provider_repository: Optional repository for fetching provider config
+            skip_validation: If True, skip provider configuration validation (useful for testing)
         """
         if provider_repository is None:
             provider_repository = StorageProviderRepositoryDjango()
@@ -23,8 +28,29 @@ class StorageService:
         if not provider_class:
             raise ValueError(f"Unsupported storage provider platform: {provider.platform}")
         
-        self.provider = provider_class(provider.config)
+        self.provider = provider_class(provider.config, skip_validation=skip_validation)
         self.provider_name = provider_name
+
+    def prepare_storage(self, file_metadata):
+        """
+        Prepares storage for a new file upload.
+        
+        Some providers (like Discord) need to create a storage container (thread)
+        before chunks can be uploaded.
+        
+        Args:
+            file_metadata: Dict with file info like {"filename": "example.pdf"}
+        
+        Returns:
+            Dict with provider-specific metadata to store with File object
+        """
+        if not isinstance(file_metadata, dict):
+            raise ValueError("file_metadata must be a dictionary")
+        
+        try:
+            return self.provider.prepare_storage(file_metadata)
+        except Exception as e:
+            raise StorageUploadError(f"Failed to prepare storage: {str(e)}") from e
 
     def upload_chunk(self, encrypted_chunk, file_metadata):
         """

@@ -262,7 +262,7 @@ class TestDiscordConfigValidatorHelpers:
         validator.validate(skip_api_check=True)
         
         report = validator.get_validation_report()
-        assert '✓' in report
+        assert '[+]' in report
         assert 'valid' in report.lower()
     
     def test_get_validation_report_with_errors(self):
@@ -272,7 +272,7 @@ class TestDiscordConfigValidatorHelpers:
         validator.validate(skip_api_check=True)
         
         report = validator.get_validation_report()
-        assert '✗' in report
+        assert '[x]' in report
         assert 'error' in report.lower()
         assert 'bot_token' in report
     
@@ -287,7 +287,7 @@ class TestDiscordConfigValidatorHelpers:
         validator.validate(skip_api_check=True)
         
         report = validator.get_validation_report()
-        assert '⚠' in report
+        assert '[!]' in report
         assert 'warning' in report.lower()
     
     def test_validation_clears_previous_errors(self):

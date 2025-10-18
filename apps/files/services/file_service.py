@@ -1,6 +1,6 @@
 from apps.files.models import File, Chunk
-from services.encryption_service import EncryptionService
-from services.storage_service import StorageService
+from apps.files.services.encryption_service import EncryptionService
+from apps.files.services.storage_service import StorageService
 
 class FileService:
     """
@@ -47,7 +47,24 @@ class FileService:
             yield decrypted_data
 
     def upload_file(self, file_stream, filename, storage_provider_name, chunk_size):
-        """Orchestrates: chunk reading -> encrypt -> store -> save DB records"""
+        """
+        Orchestrates: chunk reading -> encrypt -> store -> save DB records
+
+        Handles the file upload process.
+        - Receives the uploaded file as a stream.
+        - Instantiates the appropriate components: StorageService("discord_default"), EncryptionService(), FileRepositoryDjango().
+        - Prepares the files for upload (e.g., generates key, fills provider metadata).
+        - Creates a new File object in the database using the FileRepositoryDjango.
+        - For each chunk of the file:
+        -   Uses the EncryptionService to encrypt the file chunk by chunk.
+        -   Uses the StorageService to upload the encrypted chunks to a storage provider.
+        -   Creates the Chunk objects in the database.
+
+        Notes: 
+        - Ensure that the entire file is not loaded into memory at once to handle large files efficiently.
+        - Handle errors gracefully, ensuring that partial uploads do not leave orphaned database records.
+        (use transactions.atomic() where appropriate)
+        """
         pass
 
     def delete_file(self, file_instance: File):
