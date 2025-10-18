@@ -38,7 +38,7 @@ class Chunk(models.Model):
     file = models.ForeignKey(File, related_name='chunks', on_delete=models.CASCADE)
     chunk_order = models.IntegerField()
     # Store provider-specific details needed to retrieve the chunk
-    provider_chunk_id = models.JSONField() # e.g., Discord message ID for this chunk
+    provider_chunk_metadata = models.JSONField() # e.g., Discord message ID for this chunk
 
     class Meta:
         verbose_name = "Chunk"

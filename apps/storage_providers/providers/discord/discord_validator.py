@@ -1,7 +1,6 @@
 import re
 import logging
-import aiohttp
-import asyncio
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -177,36 +176,28 @@ class DiscordConfigValidator:
 
     def _validate_live_api(self):
         """Validates configuration against live Discord API (bot token check)."""
-
-        async def check_bot_token():
-            url = "https://discord.com/api/v10/users/@me"
-            headers = {
-                "Authorization": f"Bot {self.config['bot_token']}"
-            }
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers=headers) as response:
-                    if response.status == 200:
-                        return True
-                    elif response.status == 401:
-                        self.errors.append("Bot token is invalid or unauthorized.")
-                        return False
-                    else:
-                        self.errors.append(
-                            f"Unexpected response from Discord API when validating bot token: "
-                            f"HTTP {response.status}"
-                        )
-                        return False
+        url = "https://discord.com/api/v10/users/@me"
+        headers = {
+            "Authorization": f"Bot {self.config['bot_token']}"
+        }
         
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        loop.run_until_complete(check_bot_token())
+            with httpx.Client() as client:
+                response = client.get(url, headers=headers)
+                if response.status_code == 200:
+                    return True
+                elif response.status_code == 401:
+                    self.errors.append("Bot token is invalid or unauthorized.")
+                    return False
+                else:
+                    self.errors.append(
+                        f"Unexpected response from Discord API when validating bot token: "
+                        f"HTTP {response.status_code}"
+                    )
+                    return False
+        except httpx.RequestError as e:
+            self.errors.append(f"Failed to validate bot token: {str(e)}")
+            return False
 
     def get_errors(self):
         """Returns list of validation errors."""

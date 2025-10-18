@@ -57,13 +57,13 @@ class TestStorageService:
         """Test that download_chunk delegates to the provider's download_chunk method."""
         with patch.object(DiscordStorageProvider, 'download_chunk', return_value=b'encrypted_chunk_data') as mock_download:
             service = StorageService('test_discord', skip_validation=True)
-            provider_chunk_id = {'message_id': '123456789', 'attachment_id': '987654321'}
+            provider_chunk_metadata = {'message_id': '123456789', 'attachment_id': '987654321'}
             file_metadata = {'filename': 'test.pdf'}
             
-            result = service.download_chunk(provider_chunk_id, file_metadata)
+            result = service.download_chunk(provider_chunk_metadata, file_metadata)
             
             # Verify the provider's download_chunk was called
-            mock_download.assert_called_once_with(provider_chunk_id, file_metadata)
+            mock_download.assert_called_once_with(provider_chunk_metadata, file_metadata)
             assert result == b'encrypted_chunk_data'
 
     def test_provider_instance_cached(self, discord_provider):

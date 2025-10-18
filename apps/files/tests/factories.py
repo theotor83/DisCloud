@@ -51,7 +51,7 @@ class ChunkFactory(DjangoModelFactory):
     
     file = factory.SubFactory(FileFactory)
     chunk_order = factory.Sequence(lambda n: n)
-    provider_chunk_id = factory.LazyFunction(lambda: {
+    provider_chunk_metadata = factory.LazyFunction(lambda: {
         'message_id': fake.numerify(text='##################'),
         'attachment_id': fake.numerify(text='##################')
     })

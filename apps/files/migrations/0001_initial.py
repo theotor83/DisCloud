@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('chunk_order', models.IntegerField()),
-                ('provider_chunk_id', models.JSONField()),
+                ('provider_chunk_metadata', models.JSONField()),
                 ('file', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='chunks', to='files.file')),
             ],
         ),

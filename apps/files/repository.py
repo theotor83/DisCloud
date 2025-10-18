@@ -45,7 +45,7 @@ class BaseFileRepository(ABC):
         pass
 
     @abstractmethod
-    def create_chunk(self, file_instance, chunk_order, provider_chunk_id):
+    def create_chunk(self, file_instance, chunk_order, provider_chunk_metadata):
         """
         Creates and returns a new Chunk object associated with the given File.
         """
@@ -104,14 +104,14 @@ class FileRepositoryDjango(BaseFileRepository):
         """
         File.objects.filter(pk=file_id).delete()
 
-    def create_chunk(self, file_instance, chunk_order, provider_chunk_id):
+    def create_chunk(self, file_instance, chunk_order, provider_chunk_metadata):
         """
         Creates and returns a new Chunk object associated with the given File.
         """
         chunk_instance = Chunk.objects.create(
             file=file_instance,
             chunk_order=chunk_order,
-            provider_chunk_id=provider_chunk_id
+            provider_chunk_metadata=provider_chunk_metadata
         )
         return chunk_instance
 

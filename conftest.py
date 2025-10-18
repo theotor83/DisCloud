@@ -77,7 +77,7 @@ def file_with_chunks(sample_file):
         chunk = Chunk.objects.create(
             file=sample_file,
             chunk_order=i,
-            provider_chunk_id={'message_id': f'msg_{i}', 'attachment_id': f'att_{i}'}
+            provider_chunk_metadata={'message_id': f'msg_{i}', 'attachment_id': f'att_{i}'}
         )
         chunks.append(chunk)
     return sample_file, chunks

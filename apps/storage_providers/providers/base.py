@@ -38,7 +38,7 @@ class BaseStorageProvider(ABC):
         pass
 
     @abstractmethod
-    def download_chunk(self, provider_chunk_id, file_metadata):
+    def download_chunk(self, provider_chunk_metadata, file_metadata):
         """
         Downloads a chunk of data given its provider-specific ID,
         and any necessary file metadata.

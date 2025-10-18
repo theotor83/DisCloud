@@ -86,7 +86,7 @@ class DiscordStorageProvider(BaseStorageProvider):
         Implements the logic to upload a file chunk to a Discord thread.
         - Gets the thread ID from the file_metadata.
         - Uploads the chunk to the thread.
-        - Returns a dictionary containing the provider chunk id, message 
+        - Returns a dictionary containing the provider chunk metadata, message 
           ID, and maybe message URL, message attachment ID, etc that would
           be useful for downloading later.
 
@@ -148,7 +148,7 @@ class DiscordStorageProvider(BaseStorageProvider):
             logger.exception(f"Unexpected error during chunk upload: {e}")
             raise StorageUploadError(f"Failed to upload chunk: {str(e)}") from e
 
-    def download_chunk(self, provider_chunk_id, file_metadata):
+    def download_chunk(self, provider_chunk_metadata, file_metadata):
         """
         Implements the logic to download a file chunk from a Discord thread.
         - Gets message URL or another way of downloading from the 

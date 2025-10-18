@@ -79,17 +79,17 @@ class StorageService:
         except Exception as e:
             raise StorageUploadError(f"Failed to upload chunk: {str(e)}") from e
 
-    def download_chunk(self, provider_chunk_id, file_metadata):
+    def download_chunk(self, provider_chunk_metadata, file_metadata):
         """
         Downloads an encrypted chunk from the storage provider.
         """
-        if not provider_chunk_id:
-            raise ValueError("provider_chunk_id cannot be empty")
+        if not provider_chunk_metadata:
+            raise ValueError("provider_chunk_metadata cannot be empty")
         if not isinstance(file_metadata, dict):
             raise ValueError("file_metadata must be a dictionary")
         
         try:
-            result = self.provider.download_chunk(provider_chunk_id, file_metadata)
+            result = self.provider.download_chunk(provider_chunk_metadata, file_metadata)
             
             if not result:
                 raise StorageDownloadError("Provider returned empty chunk data")

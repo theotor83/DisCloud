@@ -1,6 +1,9 @@
 from apps.files.models import File, Chunk
 from apps.files.services.encryption_service import EncryptionService
 from apps.files.services.storage_service import StorageService
+from django.core.files.uploadedfile import UploadedFile
+from apps.storage_providers.repository import BaseStorageProviderRepository
+from apps.files.repository import BaseFileRepository
 
 class FileService:
     """
@@ -8,12 +11,14 @@ class FileService:
     storage, and database operations. Primary service layer for file management.
     """
 
-    def __init__(self, file_repository, storage_service=None, encryption_service=None):
+    def __init__(self, file_repository: BaseFileRepository, storage_service=None, encryption_service=None):
         self.file_repository = file_repository
+
         if not storage_service:
             print("No StorageService provided, using default.")
-            storage_service = StorageService(provider_name='discord_default')  # Use the default provider
+            storage_service = StorageService(provider_name='discord_default')  # Use the default provider for now
         self._storage_service = storage_service
+
         if not encryption_service:
             encryption_service = EncryptionService()
         self._encryption_service = encryption_service
@@ -33,7 +38,7 @@ class FileService:
 
         for chunk in chunks:
             encrypted_data = self._storage_service.download_chunk(
-                chunk.provider_chunk_id,
+                chunk.provider_chunk_metadata,
                 file_metadata={
                     'original_filename': file_instance.original_filename,
                     'file_id': str(file_instance.id),
@@ -46,26 +51,46 @@ class FileService:
             )
             yield decrypted_data
 
-    def upload_file(self, file_stream, filename, storage_provider_name, chunk_size):
+    def upload_file(self, file_stream: UploadedFile, filename: str,
+                    storage_provider_name: str, chunk_size: int, 
+                    storage_provider_repository: BaseStorageProviderRepository) -> File:
         """
         Orchestrates: chunk reading -> encrypt -> store -> save DB records
-
-        Handles the file upload process.
-        - Receives the uploaded file as a stream.
-        - Instantiates the appropriate components: StorageService("discord_default"), EncryptionService(), FileRepositoryDjango().
-        - Prepares the files for upload (e.g., generates key, fills provider metadata).
-        - Creates a new File object in the database using the FileRepositoryDjango.
-        - For each chunk of the file:
-        -   Uses the EncryptionService to encrypt the file chunk by chunk.
-        -   Uses the StorageService to upload the encrypted chunks to a storage provider.
-        -   Creates the Chunk objects in the database.
-
-        Notes: 
-        - Ensure that the entire file is not loaded into memory at once to handle large files efficiently.
-        - Handle errors gracefully, ensuring that partial uploads do not leave orphaned database records.
-        (use transactions.atomic() where appropriate)
         """
-        pass
+        encryption_key = self._encryption_service.key
+        
+        # Prepare for the new File object in database
+        file_metadata = {"filename":filename}
+        storage_metadata = self._storage_service.prepare_storage(file_metadata)
+
+        # Creation of the new File object
+        file_instance = self.file_repository.create_file(
+            filename,
+            filename, # Placeholder
+            "No description", # Placeholder
+            encryption_key,
+            self._storage_service.provider,
+            storage_metadata,
+        )
+
+        chunk_number = 1
+
+        for streamed_chunk in file_stream.chunks(chunk_size=chunk_size):
+            encrypted_chunk = self._encryption_service.encrypt_chunk(
+                streamed_chunk,
+            )
+
+            upload_result = self._storage_service.upload_chunk(encrypted_chunk, storage_metadata)
+
+            self.file_repository.create_chunk(
+                file_instance,
+                chunk_number,
+                upload_result
+            )
+
+            chunk_number += 1
+
+        return file_instance
 
     def delete_file(self, file_instance: File):
         """Orchestrates: delete chunks from storage -> delete DB records"""

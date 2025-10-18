@@ -5,8 +5,8 @@ from .models import File, Chunk
 class ChunkInline(admin.TabularInline):
     model = Chunk
     extra = 0
-    fields = ['chunk_order', 'provider_chunk_id']
-    readonly_fields = ['chunk_order', 'provider_chunk_id']
+    fields = ['chunk_order', 'provider_chunk_metadata']
+    readonly_fields = ['chunk_order', 'provider_chunk_metadata']
 
 
 @admin.register(File)
@@ -40,7 +40,7 @@ class FileAdmin(admin.ModelAdmin):
 
 @admin.register(Chunk)
 class ChunkAdmin(admin.ModelAdmin):
-    list_display = ['file', 'chunk_order', 'provider_chunk_id']
+    list_display = ['file', 'chunk_order', 'provider_chunk_metadata']
     list_filter = ['file__storage_provider']
     search_fields = ['file__original_filename']
-    readonly_fields = ['file', 'chunk_order', 'provider_chunk_id']
+    readonly_fields = ['file', 'chunk_order', 'provider_chunk_metadata']
