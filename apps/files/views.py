@@ -1,32 +1,50 @@
+import logging
 from django.shortcuts import render
 from django.http import StreamingHttpResponse
 from .models import File
 from .repository import FileRepositoryDjango
+from .services.file_service import FileService
+from .services.storage_service import StorageService
+from .services.encryption_service import EncryptionService
+from apps.storage_providers.repository import StorageProviderRepositoryDjango
+
+logger = logging.getLogger(__name__)
 
 def upload_file(request):
     """
     Handles the file upload process.
-    - Receives the uploaded file as a stream.
-    - Instantiates the appropriate components: StorageService("discord_default"), EncryptionService(), FileRepositoryDjango().
-    - Prepares the files for upload (e.g., generates key, fills provider metadata).
-    - Creates a new File object in the database using the FileRepositoryDjango.
-    - For each chunk of the file:
-    -   Uses the EncryptionService to encrypt the file chunk by chunk.
-    -   Uses the StorageService to upload the encrypted chunks to a storage provider.
-    -   Creates the Chunk objects in the database.
-
-    Notes: 
-    - Ensure that the entire file is not loaded into memory at once to handle large files efficiently.
-    - Handle errors gracefully, ensuring that partial uploads do not leave orphaned database records.
-      (use transactions.atomic() where appropriate)
     """
     if request.method == 'POST':
-        # Process the uploaded file in chunks to handle large files.
-        # For each chunk:
-        # 1. Encrypt the chunk using EncryptionService.
-        # 2. Upload the encrypted chunk using StorageService.
-        # 3. Create a Chunk record with the provider-specific ID.
-        pass
+        uploaded_file = request.FILES.get('uploaded_file')
+        if not uploaded_file:
+            logger.error("No file uploaded in the request.")
+            return render(request, 'upload.html', {'error': 'No file uploaded.'})
+        
+        logger.info(f"Starting upload for file: {uploaded_file.name}")
+        storage_service = StorageService('discord_default')
+
+        logger.info("Initializing FileService for upload...")
+        file_service = FileService(
+            file_repository=FileRepositoryDjango(),
+            storage_service=storage_service,
+            encryption_service=EncryptionService()
+        )
+        logger.info("Initialized FileService.")
+
+        
+        try:
+            result = file_service.upload_file(
+                file_stream=uploaded_file,
+                filename=uploaded_file.name,
+                storage_provider_name="discord_default", # Placeholder
+                chunk_size=storage_service.get_max_chunk_size(),
+                storage_provider_repository=StorageProviderRepositoryDjango()
+            )
+            logger.info(f"File uploaded successfully! File ID: {result.id}")
+        except Exception as e:
+            logger.error(f"File upload failed: {str(e)}")
+            pass
+
     return render(request, 'upload.html')
 
 def file_list(request):
