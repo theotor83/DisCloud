@@ -3,7 +3,7 @@ import logging
 
 from ..base import BaseStorageProvider
 from .discord_validator import DiscordConfigValidator
-from apps.files.exceptions import StorageUploadError
+from apps.files.exceptions import StorageUploadError, StorageDownloadError
 
 logger = logging.getLogger(__name__)
 
@@ -148,11 +148,89 @@ class DiscordStorageProvider(BaseStorageProvider):
             logger.exception(f"Unexpected error during chunk upload: {e}")
             raise StorageUploadError(f"Failed to upload chunk: {str(e)}") from e
 
-    def download_chunk(self, provider_chunk_metadata, file_metadata):
+    def download_chunk(self, provider_chunk_metadata: dict, file_metadata: dict) -> bytes:
         """
         Implements the logic to download a file chunk from a Discord thread.
         - Gets message URL or another way of downloading from the 
           file_metadata.
         - Downloads the attachment from the message.
+
+        Raises StorageDownloadError on failure.
+
+        file_metadata is expected to contain at least {"thread_id": "123456789"}
+        provider_chunk_metadata is expected to contain at least {"message_id": "987654321"},
+        but can also contain "message_url", "channel_id", "thread_id", in which case those
+        will be used for verification.
         """
-        pass
+        chunk_thread_id = provider_chunk_metadata.get("thread_id")
+        file_thread_id = file_metadata.get("thread_id")
+        if not chunk_thread_id and not file_thread_id:
+            logger.error("No thread_id found in either provider_chunk_metadata or file_metadata")
+            raise StorageDownloadError("Either provider_chunk_metadata or file_metadata must contain 'thread_id' for Discord downloads")
+        if file_thread_id and chunk_thread_id and file_thread_id != chunk_thread_id:
+            logger.warning("Mismatch between thread_id in file_metadata and provider_chunk_metadata. Using file_metadata's thread_id.")
+        thread_id = file_thread_id if file_thread_id else chunk_thread_id
+
+        message_id = provider_chunk_metadata.get("message_id")
+        if not message_id:
+            logger.error("No message_id found in provider_chunk_metadata")
+            raise StorageDownloadError("provider_chunk_metadata must contain 'message_id' for Discord downloads")
+
+        message_url = f"https://discord.com/channels/{self.server_id}/{thread_id}/{message_id}"
+        logger.info(f"Starting download for message: {message_url}")
+        
+        headers = {
+            "Authorization": f"Bot {self.bot_token}"
+        }
+        
+        # Get the message to retrieve attachment info
+        api_url = f"{self.api_base}/channels/{thread_id}/messages/{message_id}"
+        
+        try:
+            with httpx.Client(timeout=60.0) as client:
+                logger.debug("Fetching message from Discord API...")
+                response = client.get(api_url, headers=headers)
+                
+                if response.status_code == 200:
+                    message_data = response.json()
+                    
+                    # Get attachments from the message
+                    attachments = message_data.get('attachments', [])
+                    if not attachments:
+                        logger.error(f"No attachments found in message {message_id}")
+                        raise StorageDownloadError(f"No attachments found in Discord message {message_id}")
+
+                    # Get the first attachment (the bot only ever uploads one chunk per message)
+                    attachment = attachments[0]
+                    attachment_url = attachment.get('url')
+                    
+                    if not attachment_url:
+                        logger.error(f"No URL found for attachment in message {message_id}")
+                        raise StorageDownloadError(f"Attachment URL not found in message {message_id}")
+                    
+                    logger.info(f"Downloading attachment from: {attachment_url}")
+                    
+                    # Download the attachment content
+                    download_response = client.get(attachment_url)
+                    
+                    if download_response.status_code == 200:
+                        encrypted_chunk = download_response.content
+                        logger.info(f"Download successful. Chunk size: {len(encrypted_chunk)} bytes")
+                        return encrypted_chunk
+                    else:
+                        error_text = download_response.text
+                        logger.error(f"Failed to download attachment. Status: {download_response.status_code}, Error: {error_text}")
+                        raise StorageDownloadError(f"Failed to download attachment (status {download_response.status_code}): {error_text}")
+                else:
+                    error_text = response.text
+                    logger.error(f"Failed to fetch message. Status: {response.status_code}, Error: {error_text}")
+                    raise StorageDownloadError(f"Discord API error (status {response.status_code}): {error_text}")
+        
+        except httpx.HTTPError as e:
+            logger.exception(f"HTTP error during chunk download: {e}")
+            raise StorageDownloadError(f"Network error downloading chunk: {str(e)}") from e
+        except StorageDownloadError:
+            raise
+        except Exception as e:
+            logger.exception(f"Unexpected error during chunk download: {e}")
+            raise StorageDownloadError(f"Failed to download chunk: {str(e)}") from e
