@@ -96,7 +96,9 @@ def mock_aiohttp_response():
 @pytest.fixture
 def mock_storage_service():
     """Returns a mock StorageService for testing without actual uploads."""
-    mock_service = Mock()
+    from apps.files.services.storage_service import StorageService
+    mock_service = Mock(spec=StorageService)
+    mock_service.provider_name = 'test_provider'
     mock_service.upload_chunk.return_value = {'message_id': 'test_msg_123'}
     mock_service.download_chunk.return_value = b'encrypted_data'
     return mock_service

@@ -6,7 +6,7 @@ class File(models.Model):
     The actual file content is not stored in the database.
     """
     original_filename = models.CharField(max_length=255)
-    encrypted_filename = models.CharField(max_length=255, unique=True)
+    encrypted_filename = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     encryption_key = models.BinaryField() # Store the unique encryption key for this file
     uploaded_at = models.DateTimeField(auto_now_add=True)

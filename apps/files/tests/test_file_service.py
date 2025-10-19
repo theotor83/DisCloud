@@ -24,6 +24,7 @@ class TestFileServiceInit:
         """Test initializing FileService with all dependencies provided."""
         repo = FileRepositoryDjango()
         storage_service = Mock(spec=StorageService)
+        storage_service.provider_name = 'test_provider'
         encryption_service = Mock(spec=EncryptionService)
         
         service = FileService(
@@ -73,6 +74,7 @@ class TestGetDecryptedStream:
         
         # Setup mocks
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         mock_repo = Mock(spec=FileRepositoryDjango)
         
@@ -122,6 +124,7 @@ class TestGetDecryptedStream:
         sample_file, chunks = file_with_chunks
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         mock_repo = Mock(spec=FileRepositoryDjango)
         
@@ -184,6 +187,7 @@ class TestGetDecryptedStream:
         """Test that error is raised when file has no chunks."""
         mock_repo = Mock(spec=FileRepositoryDjango)
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         
         # Mock empty queryset with order_by method that returns itself
@@ -221,6 +225,7 @@ class TestGetDecryptedStream:
         )
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         mock_repo = FileRepositoryDjango()
         
@@ -250,6 +255,7 @@ class TestGetDecryptedStream:
         sample_file, chunks = file_with_chunks
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         mock_repo = Mock(spec=FileRepositoryDjango)
         
@@ -287,6 +293,7 @@ class TestGetDecryptedStream:
         sample_file, chunks = file_with_chunks
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         mock_repo = Mock(spec=FileRepositoryDjango)
         
@@ -308,6 +315,7 @@ class TestGetDecryptedStream:
         sample_file, chunks = file_with_chunks
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         mock_repo = Mock(spec=FileRepositoryDjango)
         
@@ -333,6 +341,7 @@ class TestUploadFile:
     def test_upload_file_creates_file_record(self, discord_provider):
         """Test that upload_file creates a File record in the database."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.provider = discord_provider
         mock_storage.prepare_storage.return_value = {'storage_meta': 'data'}
         
@@ -375,6 +384,7 @@ class TestUploadFile:
     def test_upload_file_encrypts_and_uploads_chunks(self, discord_provider):
         """Test that upload_file encrypts and uploads file chunks."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.provider = discord_provider
         mock_storage.prepare_storage.return_value = {'storage_meta': 'data'}
         
@@ -424,6 +434,7 @@ class TestUploadFile:
     def test_upload_file_creates_chunk_records(self, discord_provider):
         """Test that upload_file creates Chunk records for each uploaded chunk."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.provider = discord_provider
         mock_storage.prepare_storage.return_value = {'storage_meta': 'data'}
         
@@ -475,6 +486,7 @@ class TestUploadFile:
     def test_upload_file_with_small_file(self, discord_provider):
         """Test uploading a small file (single chunk)."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.provider = discord_provider
         mock_storage.prepare_storage.return_value = {'storage_meta': 'data'}
         
@@ -518,6 +530,7 @@ class TestUploadFile:
     def test_upload_file_passes_metadata_to_storage(self, discord_provider):
         """Test that upload_file passes correct metadata to storage service."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.provider = discord_provider
         mock_storage.prepare_storage.return_value = {'storage_meta': 'data'}
         
@@ -559,6 +572,7 @@ class TestUploadFile:
     def test_upload_file_handles_storage_error(self, discord_provider):
         """Test that upload_file handles storage errors properly."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.provider = discord_provider
         mock_storage.prepare_storage.return_value = {'storage_meta': 'data'}
         
@@ -597,6 +611,7 @@ class TestUploadFile:
     def test_upload_file_reads_stream_in_chunks(self, discord_provider):
         """Test that upload_file reads file stream in chunks, not all at once."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.provider = discord_provider
         mock_storage.prepare_storage.return_value = {'storage_meta': 'data'}
         
@@ -651,6 +666,7 @@ class TestDeleteFile:
     def test_delete_file_removes_database_record(self, sample_file):
         """Test that delete_file removes the File record from database."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_repo = Mock(spec=FileRepositoryDjango)
         
         service = FileService(
@@ -669,6 +685,7 @@ class TestDeleteFile:
         sample_file, chunks = file_with_chunks
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_repo = Mock(spec=FileRepositoryDjango)
         
         # Mock repository to return chunks
@@ -696,6 +713,7 @@ class TestDeleteFile:
             )
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_repo = FileRepositoryDjango()
         
         deleted_chunks = []
@@ -721,6 +739,7 @@ class TestDeleteFile:
         sample_file, chunks = file_with_chunks
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_repo = Mock(spec=FileRepositoryDjango)
         
         mock_repo.list_chunks.return_value = sample_file.chunks
@@ -739,6 +758,7 @@ class TestDeleteFile:
     def test_delete_file_with_no_chunks(self, sample_file):
         """Test deleting a file with no chunks."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_repo = FileRepositoryDjango()
         
         service = FileService(
@@ -758,6 +778,7 @@ class TestDeleteFile:
         sample_file, chunks = file_with_chunks
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_repo = Mock(spec=FileRepositoryDjango)
         
         mock_repo.list_chunks.return_value = sample_file.chunks
@@ -818,6 +839,7 @@ class TestFileServiceIntegration:
         
         # Mock storage to return encrypted data
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.download_chunk.return_value = b'encrypted_data'
         
         # Mock encryption to return plaintext chunks in order
@@ -855,6 +877,7 @@ class TestFileServiceIntegration:
         )
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.download_chunk.return_value = b'encrypted_large_data'
         
         mock_encryption = Mock(spec=EncryptionService)
@@ -914,6 +937,7 @@ class TestFileServiceIntegration:
         
         # Mock storage
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_storage.download_chunk.return_value = b'encrypted_data'
         
         # Mock encryption services
@@ -954,6 +978,7 @@ class TestFileServiceEdgeCases:
     def test_get_decrypted_stream_single_chunk(self, sample_file):
         """Test with a file that has only one chunk."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         mock_repo = Mock(spec=FileRepositoryDjango)
         
@@ -983,6 +1008,7 @@ class TestFileServiceEdgeCases:
     def test_get_decrypted_stream_many_chunks(self, sample_file):
         """Test with a file that has many chunks (100)."""
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         mock_repo = Mock(spec=FileRepositoryDjango)
         
@@ -1016,6 +1042,7 @@ class TestFileServiceEdgeCases:
         sample_file, chunks = file_with_chunks
         
         mock_storage = Mock(spec=StorageService)
+        mock_storage.provider_name = 'test_provider'
         mock_encryption = Mock(spec=EncryptionService)
         mock_repo = Mock(spec=FileRepositoryDjango)
         

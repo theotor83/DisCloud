@@ -44,6 +44,9 @@ class DiscordStorageProvider(BaseStorageProvider):
         
         filename = file_metadata.get('filename', 'Untitled')
         thread_name = f"[FILE] {filename}"
+        if len(thread_name) > 90:
+            logger.info(f"Thread name is too long, truncating to 90 characters.")
+            thread_name = thread_name[:90] + "..."
         
         logger.info(f"Creating Discord thread: {thread_name}")
         
