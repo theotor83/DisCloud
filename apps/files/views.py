@@ -66,13 +66,27 @@ def file_detail(request, file_id):
 def download_file(request, file_id):
     """
     Handles the file download process.
-    - Fetches the File object.
-    - Calls `get_decrypted_stream()` on the File object.
-    - Returns a StreamingHttpResponse to send the file to the user
-      without loading it all into memory.
+    Returns a StreamingHttpResponse to send the file to the user
+    without loading it all into memory.
     """
+    logger.info(f"Starting download for file ID: {file_id}")
+    
     file_repository = FileRepositoryDjango()
-    file_instance = file_repository.get_file(file_id)
-    response = StreamingHttpResponse(file_instance.get_decrypted_stream())
+    
+    try:
+        file_instance = file_repository.get_file(file_id)
+        logger.info(f"Retrieved file: {file_instance.id}")
+    except Exception as e:
+        logger.error(f"Failed to retrieve file {file_id}: {str(e)}")
+        raise
+    
+    encryption_key = file_instance.encryption_key
+    logger.info("Initializing FileService for download...")
+    file_service = FileService(file_repository, encryption_service=EncryptionService(encryption_key))
+    # In the future, file_service can accept a StorageService parameter based on the file's storage provider.
+    
+    logger.info(f"Creating streaming response for file: {file_instance.id}")
+    response = StreamingHttpResponse(file_service.get_decrypted_stream(file_instance))
     response['Content-Disposition'] = f'attachment; filename="{file_instance.original_filename}"'
+    logger.info(f"Download initiated successfully for file: {file_instance.id}")
     return response

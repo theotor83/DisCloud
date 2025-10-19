@@ -1,5 +1,5 @@
 import logging
-from apps.files.models import File, Chunk
+from apps.files.models import File
 from apps.files.services.encryption_service import EncryptionService
 from apps.files.services.storage_service import StorageService
 from django.core.files.uploadedfile import UploadedFile
@@ -15,7 +15,12 @@ class FileService:
     """
 
     def __init__(self, file_repository: BaseFileRepository, storage_service=None, encryption_service=None):
+        if not file_repository:
+            raise ValueError("file_repository is required")
+        if not isinstance(file_repository, BaseFileRepository):
+            raise TypeError("file_repository must be an instance of BaseFileRepository")
         self.file_repository = file_repository
+        
 
         if not storage_service:
             logger.info("No StorageService provided, using default provider 'discord_default'")
@@ -46,33 +51,26 @@ class FileService:
         chunk_count = chunks.count()
         
         if not chunks.exists():
-            logger.warning(f"No chunks found for file: {file_instance.id}")
+            logger.warning(f"No chunks found for file: {file_instance.original_filename}")
             raise ValueError("No chunks found for the given file")
         
-        logger.debug(f"Found {chunk_count} chunks for file: {file_instance.id}")
+        logger.debug(f"Found {chunk_count} chunks for file: {file_instance.original_filename}")
 
         for chunk in chunks:
-            logger.debug(f"Processing chunk {chunk.chunk_order}/{chunk_count} for file: {file_instance.id}")
+            logger.debug(f"Processing chunk {chunk.chunk_order}/{chunk_count} for file: {file_instance.original_filename}")
             try:
-                encrypted_data = self._storage_service.upload_chunk(
+                encrypted_data = self._storage_service.download_chunk(
                     chunk.provider_chunk_metadata,
-                    file_metadata={
-                        'original_filename': file_instance.original_filename,
-                        'file_id': str(file_instance.id),
-                        'chunk_order': chunk.chunk_order,
-                    }
+                    file_metadata=file_instance.storage_metadata
                 )
-                decrypted_data = self._encryption_service.decrypt_chunk(
-                    encrypted_data,
-                    file_instance.encryption_key
-                )
-                logger.debug(f"Successfully decrypted chunk {chunk.chunk_order} for file: {file_instance.id}")
+                decrypted_data = self._encryption_service.decrypt_chunk(encrypted_data)
+                logger.debug(f"Successfully decrypted chunk {chunk.chunk_order} for file: {file_instance.original_filename}")
                 yield decrypted_data
             except Exception as e:
-                logger.error(f"Failed to download/decrypt chunk {chunk.chunk_order} for file {file_instance.id}: {str(e)}")
+                logger.error(f"Failed to download/decrypt chunk {chunk.chunk_order} for file {file_instance.original_filename}: {str(e)}")
                 raise
-        
-        logger.info(f"Completed decrypted stream for file: {file_instance.id}")
+
+        logger.info(f"Completed decrypted stream for file: {file_instance.original_filename}")
 
     def upload_file(self, file_stream: UploadedFile, filename: str,
                     storage_provider_name: str, chunk_size: int, 
