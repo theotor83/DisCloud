@@ -241,7 +241,7 @@
 					<tbody>
 						{% for file in files %}
 							<tr>
-								<td class="filename" data-label="Filename">{{ file.original_filename }}</td>
+								<td class="filename" data-label="Filename">{{ file.original_filename|truncatechars:50 }}</td>
 								<td class="description" data-label="Description">{{ file.description|default:"—" }}</td>
 								<td data-label="Uploaded">{{ file.uploaded_at|date:"M j, Y g:i A" }}</td>
 								<td data-label="Actions">

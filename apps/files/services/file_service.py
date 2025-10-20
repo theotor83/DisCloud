@@ -74,7 +74,8 @@ class FileService:
 
     def upload_file(self, file_stream: UploadedFile, filename: str,
                     storage_provider_name: str, chunk_size: int, 
-                    storage_provider_repository: BaseStorageProviderRepository) -> File:
+                    storage_provider_repository: BaseStorageProviderRepository,
+                    description: str = "") -> File:
         """
         Orchestrates: chunk reading -> encrypt -> store -> save DB records
         """
@@ -95,7 +96,7 @@ class FileService:
             file_instance = self.file_repository.create_file(
                 filename,
                 filename, # Placeholder
-                "No description", # Placeholder
+                description,
                 encryption_key,
                 storage_provider_model,
                 storage_metadata,

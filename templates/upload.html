@@ -91,6 +91,49 @@
 			background: var(--accent-hover);
 		}
 
+		textarea {
+			padding: 0.9rem 1.1rem;
+			background: rgba(15, 23, 42, 0.6);
+			border: 1px solid rgba(148, 163, 184, 0.3);
+			border-radius: 0.9rem;
+			color: var(--fg);
+			font-family: inherit;
+			font-size: 0.95rem;
+			resize: vertical;
+			transition: border-color 0.2s ease;
+		}
+
+		textarea:focus {
+			outline: none;
+			border-color: var(--accent);
+		}
+
+		textarea::placeholder {
+			color: var(--muted);
+		}
+
+		select {
+			padding: 0.9rem 1.1rem;
+			background: rgba(15, 23, 42, 0.6);
+			border: 1px solid rgba(148, 163, 184, 0.3);
+			border-radius: 0.9rem;
+			color: var(--fg);
+			font-family: inherit;
+			font-size: 0.95rem;
+			cursor: pointer;
+			transition: border-color 0.2s ease;
+		}
+
+		select:focus {
+			outline: none;
+			border-color: var(--accent);
+		}
+
+		select option {
+			background: var(--bg);
+			color: var(--fg);
+		}
+
 		button {
 			align-self: flex-start;
 			padding: 0.9rem 2.2rem;
@@ -133,6 +176,16 @@
 			border: 1px solid rgba(248, 113, 113, 0.35);
 		}
 
+		.field-error {
+			margin-top: 0.5rem;
+			padding: 0.5rem 0.75rem;
+			background: rgba(248, 113, 113, 0.15);
+			border: 1px solid rgba(248, 113, 113, 0.35);
+			border-radius: 0.5rem;
+			font-size: 0.875rem;
+			color: #fca5a5;
+		}
+
 		.secondary-link {
 			display: inline-flex;
 			align-items: center;
@@ -170,10 +223,31 @@
 
 		<form method="post" enctype="multipart/form-data">
 			{% csrf_token %}
+			
 			<div class="field">
-				<label for="id_uploaded_file">Select file</label>
-				<input type="file" id="id_uploaded_file" name="uploaded_file" required>
+				<label for="id_uploaded_file">{{ form.uploaded_file.label }}</label>
+				{{ form.uploaded_file }}
+				{% if form.uploaded_file.errors %}
+					<div class="field-error">{{ form.uploaded_file.errors.0 }}</div>
+				{% endif %}
 			</div>
+
+			<div class="field">
+				<label for="id_description">{{ form.description.label }}</label>
+				{{ form.description }}
+				{% if form.description.errors %}
+					<div class="field-error">{{ form.description.errors.0 }}</div>
+				{% endif %}
+			</div>
+
+			<div class="field">
+				<label for="id_storage_provider">{{ form.storage_provider.label }}</label>
+				{{ form.storage_provider }}
+				{% if form.storage_provider.errors %}
+					<div class="field-error">{{ form.storage_provider.errors.0 }}</div>
+				{% endif %}
+			</div>
+
 			<button type="submit">Upload file</button>
 		</form>
 
