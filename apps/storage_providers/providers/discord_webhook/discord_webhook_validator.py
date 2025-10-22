@@ -4,22 +4,23 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-class DiscordConfigValidator:
+class DiscordWebhookConfigValidator:
     """
-    Validates Discord storage provider configuration.
+    Validates Discord Webhook storage provider configuration.
     
     Performs multi-layer validation:
     1. Schema validation (required fields, types)
-    2. Format validation (token patterns, ID formats)
+    2. Format validation
     3. Business logic validation (size limits, etc.)
-    4. Live API validation (check bot token works)
+    4. Live API validation (checkwebhook link is still alive)
     """
-    
-    # Format: MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs (example)
-    BOT_TOKEN_PATTERN = re.compile(r'^[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{27,}$')
-    
+
     # Discord Snowflake IDs are 17-19 digits typically
     SNOWFLAKE_PATTERN = re.compile(r'^\d{17,19}$')
+    
+    # Later part of the URL
+    WEBHOOK_TOKEN_PATTERN = re.compile(r'[A-Za-z0-9_-]{68,}$')
+    
     
     # Chunk size limits
     MIN_CHUNK_SIZE = 1024  # 1KB minimum
@@ -33,7 +34,7 @@ class DiscordConfigValidator:
 
     def validate(self, allow_errors=False, skip_api_check=False) -> bool:
         """
-        Validates the Discord configuration.
+        Validates the Discord Webhook configuration.
         
         Args:
             allow_errors: If True, returns True even if there are validation errors.
@@ -43,6 +44,11 @@ class DiscordConfigValidator:
         Returns:
             bool: True if config is valid (or has only warnings), False otherwise.
         """
+        #####################################################
+        ###                   TEMPORARY                   ###
+        #####################################################
+        logger.warning("THIS IS A TEMPORARY VALIDATE METHOD AND WILL RETURN TRUE ALL THE TIME")
+        return True
         self.errors = []
         self.warnings = []
         
@@ -64,12 +70,12 @@ class DiscordConfigValidator:
         # Log results
         if self.errors:
             for error in self.errors:
-                logger.error(f"Discord config validation error: {error}")
+                logger.error(f"Discord Webhook config validation error: {error}")
         if self.warnings:
             for warning in self.warnings:
-                logger.warning(f"Discord config validation warning: {warning}")
+                logger.warning(f"Discord Webhook config validation warning: {warning}")
 
-        logger.info(f"Discord config validation completed: {len(self.errors)} error(s), {len(self.warnings)} warning(s)")
+        logger.info(f"Discord Webhook config validation completed: {len(self.errors)} error(s), {len(self.warnings)} warning(s)")
         logger.debug(self.get_validation_report())
         
         # Return validation result
@@ -87,9 +93,7 @@ class DiscordConfigValidator:
         
         # Required fields
         required_fields = {
-            'bot_token': str,
-            'server_id': (str, int),  # Can be string or int
-            'channel_id': (str, int),
+            'webhook_url': str,
         }
         
         for field, expected_type in required_fields.items():
@@ -173,28 +177,28 @@ class DiscordConfigValidator:
                 )
 
     def _validate_live_api(self):
-        """Validates configuration against live Discord API (bot token check)."""
-        url = "https://discord.com/api/v10/users/@me"
-        headers = {
-            "Authorization": f"Bot {self.config['bot_token']}"
-        }
+        """Validates configuration against live Discord API (webhook url check)."""
+        url = self.config.get("webhook_url")
+        if not url:
+            self.errors.append(f"Could not get webhook_url from config.")
+            return False
         
         try:
             with httpx.Client() as client:
-                response = client.get(url, headers=headers)
+                response = client.get(url)
                 if response.status_code == 200:
                     return True
-                elif response.status_code == 401:
-                    self.errors.append("Bot token is invalid or unauthorized.")
+                elif response.status_code == 404:
+                    self.errors.append("Webhook link is invalid.")
                     return False
                 else:
                     self.errors.append(
-                        f"Unexpected response from Discord API when validating bot token: "
+                        f"Unexpected response from Discord API when validating webhook url: "
                         f"HTTP {response.status_code}"
                     )
                     return False
         except httpx.RequestError as e:
-            self.errors.append(f"Failed to validate bot token: {str(e)}")
+            self.errors.append(f"Failed to validate webhook url: {str(e)}")
             return False
 
     def get_errors(self):
