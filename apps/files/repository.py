@@ -9,7 +9,7 @@ class BaseFileRepository(ABC):
     """
 
     @abstractmethod
-    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_metadata):
+    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context):
         """
         Creates and returns a new File object.
         """
@@ -45,7 +45,7 @@ class BaseFileRepository(ABC):
         pass
 
     @abstractmethod
-    def create_chunk(self, file_instance, chunk_order, provider_chunk_metadata):
+    def create_chunk(self, file_instance, chunk_order, chunk_ref):
         """
         Creates and returns a new Chunk object associated with the given File.
         """
@@ -65,7 +65,7 @@ class FileRepositoryDjango(BaseFileRepository):
     Encapsulates all database interactions related to files and their chunks.
     """
 
-    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_metadata):
+    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context):
         """
         Creates and returns a new File object.
         """
@@ -75,7 +75,7 @@ class FileRepositoryDjango(BaseFileRepository):
             description=description,
             encryption_key=encryption_key,
             storage_provider=storage_provider,
-            storage_metadata=storage_metadata
+            storage_context=storage_context
         )
         return file_instance
 
@@ -104,14 +104,14 @@ class FileRepositoryDjango(BaseFileRepository):
         """
         File.objects.filter(pk=file_id).delete()
 
-    def create_chunk(self, file_instance, chunk_order, provider_chunk_metadata):
+    def create_chunk(self, file_instance, chunk_order, chunk_ref):
         """
         Creates and returns a new Chunk object associated with the given File.
         """
         chunk_instance = Chunk.objects.create(
             file=file_instance,
             chunk_order=chunk_order,
-            provider_chunk_metadata=provider_chunk_metadata
+            chunk_ref=chunk_ref
         )
         return chunk_instance
 

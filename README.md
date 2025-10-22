@@ -290,12 +290,12 @@ class TelegramStorageProvider(BaseStorageProvider):
         # Create Telegram channel/topic if needed
         return {"chat_id": self.chat_id}
     
-    def upload_chunk(self, chunk_data: bytes, chunk_metadata: dict) -> dict:
+    def upload_chunk(self, chunk_data: bytes, storage_context: dict) -> dict:
         """Upload chunk to Telegram"""
         # Implement upload logic
         return {"message_id": "123456"}
     
-    def download_chunk(self, chunk_metadata: dict) -> bytes:
+    def download_chunk(self, chunk_ref: dict, storage_context: dict) -> bytes:
         """Download chunk from Telegram"""
         # Implement download logic
         return b"encrypted_chunk_data"
@@ -381,7 +381,7 @@ return iv + ciphertext  # IV prepended for independent decryption
 def get_decrypted_stream(self, file: File):
     """Generator yields decrypted chunks without loading entire file"""
     for chunk in file.chunks.all().order_by('chunk_order'):
-        encrypted_data = self.storage_service.download_chunk(chunk.provider_chunk_metadata)
+        encrypted_data = self.storage_service.download_chunk(chunk.chunk_ref)
         decrypted = self.encryption_service.decrypt_chunk(encrypted_data)
         yield decrypted
 ```
@@ -541,10 +541,10 @@ class StorageService:
     def prepare_storage(self, file_metadata: dict) -> dict:
         """Create storage container (e.g., Discord thread)"""
     
-    def upload_chunk(self, chunk_data: bytes, chunk_metadata: dict) -> dict:
+    def upload_chunk(self, chunk_data: bytes, storage_context: dict) -> dict:
         """Upload chunk, returns provider-specific metadata"""
     
-    def download_chunk(self, chunk_metadata: dict) -> bytes:
+    def download_chunk(self, chunk_ref: dict, storage_context: dict) -> bytes:
         """Download chunk using provider metadata"""
     
     def get_max_chunk_size(self) -> int:

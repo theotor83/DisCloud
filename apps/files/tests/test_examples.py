@@ -110,7 +110,7 @@ class TestCommonPatterns:
     def test_json_field_operations(self):
         """Test JSONField operations."""
         file = FileFactory(
-            storage_metadata={
+            storage_context={
                 'thread_id': '123456',
                 'extra': {'nested': 'value'}
             }
@@ -118,11 +118,11 @@ class TestCommonPatterns:
         
         # Test JSON querying
         found = File.objects.filter(
-            storage_metadata__thread_id='123456'
+            storage_context__thread_id='123456'
         ).first()
         
         assert found.id == file.id
-        assert found.storage_metadata['extra']['nested'] == 'value'
+        assert found.storage_context['extra']['nested'] == 'value'
 
 
 @pytest.mark.unit

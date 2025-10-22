@@ -146,8 +146,8 @@ class TestGetDecryptedStream:
         
         # Check first call - call_args_list[0] has args and kwargs
         first_call = calls[0]
-        # Access kwargs['file_metadata']
-        first_call_metadata = first_call.kwargs['file_metadata']
+        # Access kwargs['storage_context']
+        first_call_metadata = first_call.kwargs['storage_context']
         assert first_call_metadata['original_filename'] == sample_file.original_filename
         assert first_call_metadata['file_id'] == str(sample_file.id)
         assert first_call_metadata['chunk_order'] == 0
@@ -211,17 +211,17 @@ class TestGetDecryptedStream:
         chunk2 = Chunk.objects.create(
             file=sample_file,
             chunk_order=2,
-            provider_chunk_metadata={'message_id': 'msg_2'}
+            chunk_ref={'message_id': 'msg_2'}
         )
         chunk0 = Chunk.objects.create(
             file=sample_file,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': 'msg_0'}
+            chunk_ref={'message_id': 'msg_0'}
         )
         chunk1 = Chunk.objects.create(
             file=sample_file,
             chunk_order=1,
-            provider_chunk_metadata={'message_id': 'msg_1'}
+            chunk_ref={'message_id': 'msg_1'}
         )
         
         mock_storage = Mock(spec=StorageService)
@@ -232,8 +232,8 @@ class TestGetDecryptedStream:
         # Track the order chunks are processed
         processed_orders = []
         
-        def track_download(chunk_id, file_metadata):
-            processed_orders.append(file_metadata['chunk_order'])
+        def track_download(chunk_id, storage_context):
+            processed_orders.append(storage_context['chunk_order'])
             return b'encrypted_data'
         
         mock_storage.download_chunk.side_effect = track_download
@@ -567,7 +567,7 @@ class TestUploadFile:
         # Verify metadata was passed to upload_chunk
         assert mock_storage.upload_chunk.called
         # Just verify upload_chunk was called - the current implementation
-        # doesn't pass file_metadata to upload_chunk, only storage_metadata
+        # doesn't pass file_metadata to upload_chunk, only storage_context
 
     def test_upload_file_handles_storage_error(self, discord_provider):
         """Test that upload_file handles storage errors properly."""
@@ -709,7 +709,7 @@ class TestDeleteFile:
             Chunk.objects.create(
                 file=sample_file,
                 chunk_order=i,
-                provider_chunk_metadata={'message_id': f'msg_{i}'}
+                chunk_ref={'message_id': f'msg_{i}'}
             )
         
         mock_storage = Mock(spec=StorageService)
@@ -834,7 +834,7 @@ class TestFileServiceIntegration:
             Chunk.objects.create(
                 file=sample_file,
                 chunk_order=i,
-                provider_chunk_metadata={'message_id': f'msg_{i}'}
+                chunk_ref={'message_id': f'msg_{i}'}
             )
         
         # Mock storage to return encrypted data
@@ -873,7 +873,7 @@ class TestFileServiceIntegration:
         Chunk.objects.create(
             file=sample_file,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': 'msg_0'}
+            chunk_ref={'message_id': 'msg_0'}
         )
         
         mock_storage = Mock(spec=StorageService)
@@ -926,13 +926,13 @@ class TestFileServiceIntegration:
         Chunk.objects.create(
             file=file1,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': 'msg_1'}
+            chunk_ref={'message_id': 'msg_1'}
         )
         
         Chunk.objects.create(
             file=file2,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': 'msg_2'}
+            chunk_ref={'message_id': 'msg_2'}
         )
         
         # Mock storage
@@ -986,7 +986,7 @@ class TestFileServiceEdgeCases:
         Chunk.objects.create(
             file=sample_file,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': 'msg_0'}
+            chunk_ref={'message_id': 'msg_0'}
         )
         
         mock_repo.list_chunks.return_value = sample_file.chunks
@@ -1017,7 +1017,7 @@ class TestFileServiceEdgeCases:
             Chunk.objects.create(
                 file=sample_file,
                 chunk_order=i,
-                provider_chunk_metadata={'message_id': f'msg_{i}'}
+                chunk_ref={'message_id': f'msg_{i}'}
             )
         
         mock_repo.list_chunks.return_value = sample_file.chunks

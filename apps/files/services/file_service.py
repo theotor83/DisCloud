@@ -60,8 +60,8 @@ class FileService:
             logger.debug(f"Processing chunk {chunk.chunk_order}/{chunk_count} for file: {file_instance.original_filename}")
             try:
                 encrypted_data = self._storage_service.download_chunk(
-                    chunk.provider_chunk_metadata,
-                    file_metadata=file_instance.storage_metadata
+                    chunk.chunk_ref,
+                    storage_context=file_instance.storage_context
                 )
                 decrypted_data = self._encryption_service.decrypt_chunk(encrypted_data)
                 logger.debug(f"Successfully decrypted chunk {chunk.chunk_order} for file: {file_instance.original_filename}")
@@ -87,7 +87,7 @@ class FileService:
             
             # Prepare for the new File object in database
             file_metadata = {"filename": filename}
-            storage_metadata = self._storage_service.prepare_storage(file_metadata)
+            storage_context = self._storage_service.prepare_storage(file_metadata)
             logger.debug(f"Prepared storage metadata for file: {filename}")
 
             storage_provider_model = storage_provider_repository.get_provider_by_name(storage_provider_name)
@@ -99,7 +99,7 @@ class FileService:
                 description,
                 encryption_key,
                 storage_provider_model,
-                storage_metadata,
+                storage_context,
             )
             logger.info(f"Created file record in database: {file_instance.id} ({filename})")
 
@@ -113,7 +113,7 @@ class FileService:
                 )
                 logger.debug(f"Encrypted chunk {chunk_number} for file: {filename}")
 
-                upload_result = self._storage_service.upload_chunk(encrypted_chunk, storage_metadata)
+                upload_result = self._storage_service.upload_chunk(encrypted_chunk, storage_context)
                 logger.debug(f"Uploaded chunk {chunk_number} to storage for file: {filename}")
 
                 self.file_repository.create_chunk(

@@ -20,7 +20,7 @@ class TestFileModel:
             description='Test document',
             encryption_key=sample_encryption_key,
             storage_provider=discord_provider,
-            storage_metadata={'thread_id': '123456'}
+            storage_context={'thread_id': '123456'}
         )
         
         assert file_obj.id is not None
@@ -82,12 +82,12 @@ class TestFileModel:
         Chunk.objects.create(
             file=sample_file,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': '111'}
+            chunk_ref={'message_id': '111'}
         )
         Chunk.objects.create(
             file=sample_file,
             chunk_order=1,
-            provider_chunk_metadata={'message_id': '222'}
+            chunk_ref={'message_id': '222'}
         )
         
         assert sample_file.chunks.count() == 2
@@ -99,9 +99,9 @@ class TestFileModel:
         # Verify chunks are deleted
         assert Chunk.objects.filter(file_id=file_id).count() == 0
 
-    def test_storage_metadata_json_field(self, sample_file):
-        """Test that storage_metadata can store and retrieve JSON data."""
-        sample_file.storage_metadata = {
+    def test_storage_context_json_field(self, sample_file):
+        """Test that storage_context can store and retrieve JSON data."""
+        sample_file.storage_context = {
             'thread_id': '999888777',
             'channel_name': 'test-channel',
             'extra_info': {'nested': 'value'}
@@ -110,8 +110,8 @@ class TestFileModel:
         
         # Reload from database
         reloaded = File.objects.get(id=sample_file.id)
-        assert reloaded.storage_metadata['thread_id'] == '999888777'
-        assert reloaded.storage_metadata['extra_info']['nested'] == 'value'
+        assert reloaded.storage_context['thread_id'] == '999888777'
+        assert reloaded.storage_context['extra_info']['nested'] == 'value'
 
 
 @pytest.mark.django_db
@@ -123,20 +123,20 @@ class TestChunkModel:
         chunk = Chunk.objects.create(
             file=sample_file,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': 'msg123', 'attachment_id': 'att456'}
+            chunk_ref={'message_id': 'msg123', 'attachment_id': 'att456'}
         )
         
         assert chunk.id is not None
         assert chunk.file == sample_file
         assert chunk.chunk_order == 0
-        assert chunk.provider_chunk_metadata['message_id'] == 'msg123'
+        assert chunk.chunk_ref['message_id'] == 'msg123'
 
     def test_chunk_str_representation(self, sample_file):
         """Test the string representation of a Chunk object."""
         chunk = Chunk.objects.create(
             file=sample_file,
             chunk_order=2,
-            provider_chunk_metadata={'message_id': 'test'}
+            chunk_ref={'message_id': 'test'}
         )
         
         str_repr = str(chunk)
@@ -148,17 +148,17 @@ class TestChunkModel:
         chunk2 = Chunk.objects.create(
             file=sample_file,
             chunk_order=2,
-            provider_chunk_metadata={'message_id': 'msg2'}
+            chunk_ref={'message_id': 'msg2'}
         )
         chunk0 = Chunk.objects.create(
             file=sample_file,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': 'msg0'}
+            chunk_ref={'message_id': 'msg0'}
         )
         chunk1 = Chunk.objects.create(
             file=sample_file,
             chunk_order=1,
-            provider_chunk_metadata={'message_id': 'msg1'}
+            chunk_ref={'message_id': 'msg1'}
         )
         
         chunks = list(sample_file.chunks.all())
@@ -171,7 +171,7 @@ class TestChunkModel:
         Chunk.objects.create(
             file=sample_file,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': 'msg1'}
+            chunk_ref={'message_id': 'msg1'}
         )
         
         # Attempting to create another chunk with same file and chunk_order should fail
@@ -179,7 +179,7 @@ class TestChunkModel:
             Chunk.objects.create(
                 file=sample_file,
                 chunk_order=0,  # Same order
-                provider_chunk_metadata={'message_id': 'msg2'}
+                chunk_ref={'message_id': 'msg2'}
             )
 
     def test_chunk_related_name(self, sample_file):
@@ -187,24 +187,24 @@ class TestChunkModel:
         Chunk.objects.create(
             file=sample_file,
             chunk_order=0,
-            provider_chunk_metadata={'message_id': 'msg1'}
+            chunk_ref={'message_id': 'msg1'}
         )
         Chunk.objects.create(
             file=sample_file,
             chunk_order=1,
-            provider_chunk_metadata={'message_id': 'msg2'}
+            chunk_ref={'message_id': 'msg2'}
         )
         
         # Access via related name
         assert sample_file.chunks.count() == 2
         assert sample_file.chunks.filter(chunk_order=0).exists()
 
-    def test_provider_chunk_metadata_json_storage(self, sample_file):
-        """Test that provider_chunk_metadata can store complex JSON data."""
+    def test_chunk_ref_json_storage(self, sample_file):
+        """Test that chunk_ref can store complex JSON data."""
         chunk = Chunk.objects.create(
             file=sample_file,
             chunk_order=0,
-            provider_chunk_metadata={
+            chunk_ref={
                 'message_id': '123456789',
                 'attachment_id': '987654321',
                 'channel_id': '111222333',
@@ -214,8 +214,8 @@ class TestChunkModel:
         
         # Reload from database
         reloaded = Chunk.objects.get(id=chunk.id)
-        assert reloaded.provider_chunk_metadata['message_id'] == '123456789'
-        assert reloaded.provider_chunk_metadata['metadata']['size'] == 1024
+        assert reloaded.chunk_ref['message_id'] == '123456789'
+        assert reloaded.chunk_ref['metadata']['size'] == 1024
 
 
 @pytest.mark.django_db
@@ -228,7 +228,7 @@ class TestFileChunkRelationship:
             Chunk.objects.create(
                 file=sample_file,
                 chunk_order=i,
-                provider_chunk_metadata={'message_id': f'msg{i}'}
+                chunk_ref={'message_id': f'msg{i}'}
             )
         
         assert sample_file.chunks.count() == 5
@@ -249,11 +249,11 @@ class TestFileChunkRelationship:
         )
         
         # Create chunks for file1
-        Chunk.objects.create(file=file1, chunk_order=0, provider_chunk_metadata={'msg': '1'})
-        Chunk.objects.create(file=file1, chunk_order=1, provider_chunk_metadata={'msg': '2'})
+        Chunk.objects.create(file=file1, chunk_order=0, chunk_ref={'msg': '1'})
+        Chunk.objects.create(file=file1, chunk_order=1, chunk_ref={'msg': '2'})
         
         # Create chunks for file2
-        Chunk.objects.create(file=file2, chunk_order=0, provider_chunk_metadata={'msg': '3'})
+        Chunk.objects.create(file=file2, chunk_order=0, chunk_ref={'msg': '3'})
         
         assert file1.chunks.count() == 2
         assert file2.chunks.count() == 1

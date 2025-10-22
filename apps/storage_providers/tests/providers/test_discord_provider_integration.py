@@ -170,12 +170,12 @@ class TestRealDiscordProviderEndToEnd:
         
         # Step 1: Prepare storage (create thread)
         file_metadata = {'filename': 'e2e_test_file.bin'}
-        storage_metadata = provider.prepare_storage(file_metadata)
+        storage_context = provider.prepare_storage(file_metadata)
         
-        assert storage_metadata is not None
-        assert 'thread_id' in storage_metadata
+        assert storage_context is not None
+        assert 'thread_id' in storage_context
         
-        print(f"✅ E2E test prepared storage: {storage_metadata['thread_id']}")
+        print(f"✅ E2E test prepared storage: {storage_context['thread_id']}")
         
         # Step 2: Upload chunk (will be implemented later)
         # encrypted_chunk = b'test encrypted data'

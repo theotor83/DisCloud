@@ -45,25 +45,25 @@ class TestStorageService:
         with patch.object(DiscordStorageProvider, 'upload_chunk', return_value={'message_id': '123456789'}) as mock_upload:
             service = StorageService('test_discord', skip_validation=True)
             encrypted_chunk = b'encrypted_data_here'
-            file_metadata = {'filename': 'test.pdf'}
+            storage_context = {'thread_id': 'test_thread'}
             
-            result = service.upload_chunk(encrypted_chunk, file_metadata)
+            result = service.upload_chunk(encrypted_chunk, storage_context)
             
             # Verify the provider's upload_chunk was called
-            mock_upload.assert_called_once_with(encrypted_chunk, file_metadata)
+            mock_upload.assert_called_once_with(encrypted_chunk, storage_context)
             assert result == {'message_id': '123456789'}
 
     def test_download_chunk_delegates_to_provider(self, discord_provider):
         """Test that download_chunk delegates to the provider's download_chunk method."""
         with patch.object(DiscordStorageProvider, 'download_chunk', return_value=b'encrypted_chunk_data') as mock_download:
             service = StorageService('test_discord', skip_validation=True)
-            provider_chunk_metadata = {'message_id': '123456789', 'attachment_id': '987654321'}
-            file_metadata = {'filename': 'test.pdf'}
+            chunk_ref = {'message_id': '123456789', 'attachment_id': '987654321'}
+            storage_context = {'thread_id': 'test_thread'}
             
-            result = service.download_chunk(provider_chunk_metadata, file_metadata)
+            result = service.download_chunk(chunk_ref, storage_context)
             
             # Verify the provider's download_chunk was called
-            mock_download.assert_called_once_with(provider_chunk_metadata, file_metadata)
+            mock_download.assert_called_once_with(chunk_ref, storage_context)
             assert result == b'encrypted_chunk_data'
 
     def test_provider_instance_cached(self, discord_provider):
@@ -92,14 +92,14 @@ class TestStorageServiceIntegration:
                 
                 # Upload a chunk
                 encrypted_chunk = b'test_encrypted_data'
-                file_metadata = {'filename': 'document.pdf'}
-                upload_result = service.upload_chunk(encrypted_chunk, file_metadata)
+                storage_context = {'thread_id': 'test_thread'}
+                upload_result = service.upload_chunk(encrypted_chunk, storage_context)
                 
                 assert 'message_id' in upload_result
                 assert upload_result['message_id'] == '987654321'
                 
                 # Download the chunk using the returned ID
-                downloaded_data = service.download_chunk(upload_result, file_metadata)
+                downloaded_data = service.download_chunk(upload_result, storage_context)
                 
                 assert downloaded_data == b'encrypted_chunk_content'
 

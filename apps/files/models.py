@@ -11,7 +11,7 @@ class File(models.Model):
     encryption_key = models.BinaryField() # Store the unique encryption key for this file
     uploaded_at = models.DateTimeField(auto_now_add=True)
     storage_provider = models.ForeignKey('storage_providers.StorageProvider', on_delete=models.PROTECT)
-    storage_metadata = models.JSONField(default=dict, blank=True)
+    storage_context = models.JSONField(default=dict, blank=True)
 
     class Meta:
         verbose_name = "File"
@@ -38,7 +38,7 @@ class Chunk(models.Model):
     file = models.ForeignKey(File, related_name='chunks', on_delete=models.CASCADE)
     chunk_order = models.IntegerField()
     # Store provider-specific details needed to retrieve the chunk
-    provider_chunk_metadata = models.JSONField() # e.g., Discord message ID for this chunk
+    chunk_ref = models.JSONField() # e.g., Discord message ID for this chunk
 
     class Meta:
         verbose_name = "Chunk"

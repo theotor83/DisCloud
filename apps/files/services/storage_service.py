@@ -52,21 +52,21 @@ class StorageService:
         except Exception as e:
             raise StorageUploadError(f"Failed to prepare storage: {str(e)}") from e
 
-    def upload_chunk(self, encrypted_chunk, file_metadata):
+    def upload_chunk(self, encrypted_chunk, storage_context):
         """
         Uploads an encrypted chunk of a file to the configured storage provider.
-        - `file_metadata` can contain information like the original filename
+        - `storage_context` can contain information like the original filename
           to help the provider decide on "folders" (e.g., Discord thread ID).
         - Returns a dictionary containing provider-specific ID for the stored 
           chunk, and file metadata for future retrieval.
         """
         if not encrypted_chunk:
             raise ValueError("encrypted_chunk cannot be empty")
-        if not isinstance(file_metadata, dict):
-            raise ValueError("file_metadata must be a dictionary")
+        if not isinstance(storage_context, dict):
+            raise ValueError("storage_context must be a dictionary")
         
         try:
-            result = self.provider.upload_chunk(encrypted_chunk, file_metadata)
+            result = self.provider.upload_chunk(encrypted_chunk, storage_context)
 
             if not result:
                 raise StorageUploadError("Provider returned no result")
@@ -79,17 +79,17 @@ class StorageService:
         except Exception as e:
             raise StorageUploadError(f"Failed to upload chunk: {str(e)}") from e
 
-    def download_chunk(self, provider_chunk_metadata, file_metadata):
+    def download_chunk(self, chunk_ref, storage_context):
         """
         Downloads an encrypted chunk from the storage provider.
         """
-        if not provider_chunk_metadata:
-            raise ValueError("provider_chunk_metadata cannot be empty")
-        if not isinstance(file_metadata, dict):
-            raise ValueError("file_metadata must be a dictionary")
+        if not chunk_ref:
+            raise ValueError("chunk_ref cannot be empty")
+        if not isinstance(storage_context, dict):
+            raise ValueError("storage_context must be a dictionary")
         
         try:
-            result = self.provider.download_chunk(provider_chunk_metadata, file_metadata)
+            result = self.provider.download_chunk(chunk_ref, storage_context)
             
             if not result:
                 raise StorageDownloadError("Provider returned empty chunk data")

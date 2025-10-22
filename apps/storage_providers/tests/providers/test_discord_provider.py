@@ -175,9 +175,9 @@ class TestDiscordProviderChunkOperations:
         
         with patch('httpx.Client.post', return_value=mock_response):
             encrypted_chunk = b'encrypted test data'
-            file_metadata = {'thread_id': '111222333444555666'}
+            storage_context = {'thread_id': '111222333444555666'}
             
-            result = provider.upload_chunk(encrypted_chunk, file_metadata)
+            result = provider.upload_chunk(encrypted_chunk, storage_context)
             
             assert result is not None
             assert 'message_id' in result
@@ -189,10 +189,10 @@ class TestDiscordProviderChunkOperations:
         provider = DiscordStorageProvider(mock_discord_config, skip_validation=True)
         
         encrypted_chunk = b'encrypted test data'
-        file_metadata = {}  # Missing thread_id
+        storage_context = {}  # Missing thread_id
         
         with pytest.raises(ValueError) as exc_info:
-            provider.upload_chunk(encrypted_chunk, file_metadata)
+            provider.upload_chunk(encrypted_chunk, storage_context)
         
         assert 'thread_id' in str(exc_info.value)
 
@@ -255,10 +255,10 @@ class TestDiscordProviderEndToEnd:
         with patch('httpx.Client.post', return_value=mock_response):
             # Prepare storage
             file_metadata = {'filename': 'large_file.bin'}
-            storage_metadata = provider.prepare_storage(file_metadata)
+            storage_context = provider.prepare_storage(file_metadata)
             
-            assert storage_metadata is not None
-            assert storage_metadata['thread_id'] == thread_id
+            assert storage_context is not None
+            assert storage_context['thread_id'] == thread_id
             
             # Note: Chunk upload tests will be added when upload_chunk is implemented
 

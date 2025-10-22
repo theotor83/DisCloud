@@ -63,7 +63,7 @@ def sample_file(discord_provider, sample_encryption_key):
         description='A test file for unit testing',
         encryption_key=sample_encryption_key,
         storage_provider=discord_provider,
-        storage_metadata={'thread_id': '111222333444555666'}
+        storage_context={'thread_id': '111222333444555666'}
     )
     return file_obj
 
@@ -77,7 +77,7 @@ def file_with_chunks(sample_file):
         chunk = Chunk.objects.create(
             file=sample_file,
             chunk_order=i,
-            provider_chunk_metadata={'message_id': f'msg_{i}', 'attachment_id': f'att_{i}'}
+            chunk_ref={'message_id': f'msg_{i}', 'attachment_id': f'att_{i}'}
         )
         chunks.append(chunk)
     return sample_file, chunks

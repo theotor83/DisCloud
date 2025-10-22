@@ -38,7 +38,7 @@ class FileFactory(DjangoModelFactory):
     description = factory.Faker('sentence')
     encryption_key = factory.LazyFunction(lambda: b'0' * 32)
     storage_provider = factory.SubFactory(StorageProviderFactory)
-    storage_metadata = factory.LazyFunction(lambda: {
+    storage_context = factory.LazyFunction(lambda: {
         'thread_id': fake.numerify(text='##################')
     })
 
@@ -51,7 +51,7 @@ class ChunkFactory(DjangoModelFactory):
     
     file = factory.SubFactory(FileFactory)
     chunk_order = factory.Sequence(lambda n: n)
-    provider_chunk_metadata = factory.LazyFunction(lambda: {
+    chunk_ref = factory.LazyFunction(lambda: {
         'message_id': fake.numerify(text='##################'),
         'attachment_id': fake.numerify(text='##################')
     })

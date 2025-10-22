@@ -5,8 +5,8 @@ from .models import File, Chunk
 class ChunkInline(admin.TabularInline):
     model = Chunk
     extra = 0
-    fields = ['chunk_order', 'provider_chunk_metadata']
-    readonly_fields = ['chunk_order', 'provider_chunk_metadata']
+    fields = ['chunk_order', 'chunk_ref']
+    readonly_fields = ['chunk_order', 'chunk_ref']
 
 
 @admin.register(File)
@@ -14,7 +14,7 @@ class FileAdmin(admin.ModelAdmin):
     list_display = ['original_filename', 'storage_provider', 'uploaded_at', 'chunk_count']
     list_filter = ['storage_provider', 'uploaded_at']
     search_fields = ['original_filename', 'description']
-    readonly_fields = ['encrypted_filename', 'encryption_key', 'uploaded_at', 'storage_metadata']
+    readonly_fields = ['encrypted_filename', 'encryption_key', 'uploaded_at', 'storage_context']
     inlines = [ChunkInline]
     
     fieldsets = (
@@ -22,7 +22,7 @@ class FileAdmin(admin.ModelAdmin):
             'fields': ('original_filename', 'description', 'encrypted_filename')
         }),
         ('Storage Details', {
-            'fields': ('storage_provider', 'storage_metadata')
+            'fields': ('storage_provider', 'storage_context')
         }),
         ('Encryption', {
             'fields': ('encryption_key',),
@@ -40,7 +40,7 @@ class FileAdmin(admin.ModelAdmin):
 
 @admin.register(Chunk)
 class ChunkAdmin(admin.ModelAdmin):
-    list_display = ['file', 'chunk_order', 'provider_chunk_metadata']
+    list_display = ['file', 'chunk_order', 'chunk_ref']
     list_filter = ['file__storage_provider']
     search_fields = ['file__original_filename']
-    readonly_fields = ['file', 'chunk_order', 'provider_chunk_metadata']
+    readonly_fields = ['file', 'chunk_order', 'chunk_ref']

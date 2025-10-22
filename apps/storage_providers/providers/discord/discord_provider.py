@@ -84,22 +84,22 @@ class DiscordStorageProvider(BaseStorageProvider):
             logger.exception(f"Unexpected error creating Discord thread: {e}")
             raise StorageUploadError(f"Failed to create thread: {str(e)}") from e
 
-    def upload_chunk(self, encrypted_chunk: bytes, file_metadata: dict) -> dict:
+    def upload_chunk(self, encrypted_chunk: bytes, storage_context: dict) -> dict:
         """
         Implements the logic to upload a file chunk to a Discord thread.
-        - Gets the thread ID from the file_metadata.
+        - Gets the thread ID from the storage_context.
         - Uploads the chunk to the thread.
-        - Returns a dictionary containing the provider chunk metadata, message 
+        - Returns a dictionary containing the chunk reference, message 
           ID, and maybe message URL, message attachment ID, etc that would
           be useful for downloading later.
 
-        file_metadata is expected to contain at least {"thread_id": "123456789"}
+        storage_context is expected to contain at least {"thread_id": "123456789"}
         Raises StorageUploadError on failure.
         """
         
-        thread_id = file_metadata.get("thread_id")
+        thread_id = storage_context.get("thread_id")
         if not thread_id:
-            raise ValueError("file_metadata must contain 'thread_id' for Discord uploads")
+            raise ValueError("storage_context must contain 'thread_id' for Discord uploads")
         
         logger.info(f"Starting upload to thread: {thread_id}")
         logger.debug(f"Chunk size: {len(encrypted_chunk)} bytes")
@@ -151,33 +151,33 @@ class DiscordStorageProvider(BaseStorageProvider):
             logger.exception(f"Unexpected error during chunk upload: {e}")
             raise StorageUploadError(f"Failed to upload chunk: {str(e)}") from e
 
-    def download_chunk(self, provider_chunk_metadata: dict, file_metadata: dict) -> bytes:
+    def download_chunk(self, chunk_ref: dict, storage_context: dict) -> bytes:
         """
         Implements the logic to download a file chunk from a Discord thread.
         - Gets message URL or another way of downloading from the 
-          file_metadata.
+          storage_context.
         - Downloads the attachment from the message.
 
         Raises StorageDownloadError on failure.
 
-        file_metadata is expected to contain at least {"thread_id": "123456789"}
-        provider_chunk_metadata is expected to contain at least {"message_id": "987654321"},
+        storage_context is expected to contain at least {"thread_id": "123456789"}
+        chunk_ref is expected to contain at least {"message_id": "987654321"},
         but can also contain "message_url", "channel_id", "thread_id", in which case those
         will be used for verification.
         """
-        chunk_thread_id = provider_chunk_metadata.get("thread_id")
-        file_thread_id = file_metadata.get("thread_id")
+        chunk_thread_id = chunk_ref.get("thread_id")
+        file_thread_id = storage_context.get("thread_id")
         if not chunk_thread_id and not file_thread_id:
-            logger.error("No thread_id found in either provider_chunk_metadata or file_metadata")
-            raise StorageDownloadError("Either provider_chunk_metadata or file_metadata must contain 'thread_id' for Discord downloads")
+            logger.error("No thread_id found in either chunk_ref or storage_context")
+            raise StorageDownloadError("Either chunk_ref or storage_context must contain 'thread_id' for Discord downloads")
         if file_thread_id and chunk_thread_id and file_thread_id != chunk_thread_id:
-            logger.warning("Mismatch between thread_id in file_metadata and provider_chunk_metadata. Using file_metadata's thread_id.")
+            logger.warning("Mismatch between thread_id in storage_context and chunk_ref. Using storage_context's thread_id.")
         thread_id = file_thread_id if file_thread_id else chunk_thread_id
 
-        message_id = provider_chunk_metadata.get("message_id")
+        message_id = chunk_ref.get("message_id")
         if not message_id:
-            logger.error("No message_id found in provider_chunk_metadata")
-            raise StorageDownloadError("provider_chunk_metadata must contain 'message_id' for Discord downloads")
+            logger.error("No message_id found in chunk_ref")
+            raise StorageDownloadError("chunk_ref must contain 'message_id' for Discord downloads")
 
         message_url = f"https://discord.com/channels/{self.server_id}/{thread_id}/{message_id}"
         logger.info(f"Starting download for message: {message_url}")

@@ -2,7 +2,7 @@ import httpx
 import logging
 
 from ..base import BaseStorageProvider
-from discord_webhook_validator import DiscordWebhookConfigValidator
+from .discord_webhook_validator import DiscordWebhookConfigValidator
 from apps.files.exceptions import StorageUploadError, StorageDownloadError
 
 logger = logging.getLogger(__name__)
@@ -118,33 +118,33 @@ class DiscordWebhookStorageProvider(BaseStorageProvider):
             logger.exception(f"HTTP error while creating Discord thread: {e}")
             raise StorageUploadError(f"Network error creating thread: {str(e)}") from e
 
-    def upload_chunk(self, encrypted_chunk: bytes, file_metadata: dict) -> dict:
+    def upload_chunk(self, encrypted_chunk: bytes, storage_context: dict) -> dict:
         """
         Implements the logic to upload a file chunk using a Discord Webhook.
-        - Uses self.webhook_url or file_metadata's webhook_url field.
-        - Returns a dictionary containing the provider chunk metadata, which
+        - Uses self.webhook_url or storage_context's webhook_url field.
+        - Returns a dictionary containing the chunk reference, which
           is the message url that will be used for downloading later. For
           simplicity, it will also include the whole response from Discord API.
 
-        file_metadata is a dict that must contain at least webhook_url, server_id, 
+        storage_context is a dict that must contain at least webhook_url, server_id, 
         and channel_id.
         Raises StorageUploadError on failure.
         """
         
-        webhook_url_metadata = file_metadata.get("webhook_url")
-        server_id = file_metadata.get("server_id")
-        channel_id = file_metadata.get("channel_id")
+        webhook_url_metadata = storage_context.get("webhook_url")
+        server_id = storage_context.get("server_id")
+        channel_id = storage_context.get("channel_id")
 
         if not webhook_url_metadata:
-            logger.warning("file_metadata is missing webhook_url. Using self.webhook_url.")
+            logger.warning("storage_context is missing webhook_url. Using self.webhook_url.")
             webhook_url_metadata = self.webhook_url
         if webhook_url_metadata != self.webhook_url:
-            logger.warning("Mismatch between file_metadata['webhook_url'] and self.webhook_url. Using self.webhook_url.")
+            logger.warning("Mismatch between storage_context['webhook_url'] and self.webhook_url. Using self.webhook_url.")
             webhook_url_metadata = self.webhook_url
 
         if not server_id or not channel_id:
-            logger.error("file_metadata must contain 'server_id' and 'channel_id' for Discord Webhook uploads")
-            raise StorageUploadError("file_metadata must contain 'server_id' and 'channel_id' for Discord Webhook uploads")
+            logger.error("storage_context must contain 'server_id' and 'channel_id' for Discord Webhook uploads")
+            raise StorageUploadError("storage_context must contain 'server_id' and 'channel_id' for Discord Webhook uploads")
         
         logger.info(f"Starting upload to Discord Webhook: {webhook_url_metadata}")
         logger.debug(f"Chunk size: {len(encrypted_chunk)} bytes")
@@ -196,7 +196,7 @@ class DiscordWebhookStorageProvider(BaseStorageProvider):
             logger.exception(f"Unexpected error during chunk upload: {e}")
             raise StorageUploadError(f"Failed to upload chunk: {str(e)}") from e
 
-    def download_chunk(self, provider_chunk_metadata: dict, file_metadata: dict) -> bytes:
+    def download_chunk(self, chunk_ref: dict, storage_context: dict) -> bytes:
         """
         TODO
         """
