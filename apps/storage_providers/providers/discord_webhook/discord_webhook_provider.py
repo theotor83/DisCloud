@@ -29,6 +29,13 @@ class DiscordWebhookStorageProvider(BaseStorageProvider):
 
         self.api_base = "https://discord.com/api/v10"
 
+        self._credentials = self._get_credentials()
+
+        self.server_id = self._credentials.get("server_id", None)
+        self.channel_id = self._credentials.get("channel_id", None)
+        self.webhook_id = self._credentials.get("webhook_id", None)
+        self.webhook_token = self._credentials.get("webhook_token", None)
+
 
     def _get_credentials(self) -> dict:
         """

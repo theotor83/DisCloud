@@ -94,8 +94,12 @@ def download_file(request, file_id):
     
     encryption_key = file_instance.encryption_key
     logger.info("Initializing FileService for download...")
-    file_service = FileService(file_repository, encryption_service=EncryptionService(encryption_key))
-    # In the future, file_service can accept a StorageService parameter based on the file's storage provider.
+    file_service = FileService(
+        file_repository,
+        storage_service=StorageService(file_instance.storage_provider.name), # Dynamically create based on file's provider
+        encryption_service=EncryptionService(encryption_key)
+        )
+
     
     logger.info(f"Creating streaming response for file: {file_instance.id}")
     response = StreamingHttpResponse(file_service.get_decrypted_stream(file_instance))
