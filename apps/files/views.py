@@ -106,3 +106,10 @@ def download_file(request, file_id):
     response['Content-Disposition'] = f'attachment; filename="{file_instance.original_filename}"'
     logger.info(f"Download initiated successfully for file: {file_instance.id}")
     return response
+
+def choose_provider(request):
+    """
+    Displays a page where users can choose between creating
+    a Discord Bot provider or a Discord Webhook provider.
+    """
+    return render(request, 'choose_provider.html')

@@ -216,7 +216,10 @@
 				<h1>My Files</h1>
 				<p class="lead">Browse everything you've stored in DisCloud and jump back into your latest uploads.</p>
 			</div>
-			<a class="primary-link" href="{% url 'files:upload' %}">Upload new file</a>
+			<div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+				<a class="primary-link" href="{% url 'files:upload' %}">Upload new file</a>
+				<a class="primary-link" href="{% url 'files:choose_provider' %}" style="background: linear-gradient(135deg, #64748b 0%, #475569 100%); box-shadow: 0 14px 28px rgba(100, 116, 139, 0.25);">New Provider</a>
+			</div>
 		</header>
 
 		{% if messages %}
@@ -242,7 +245,7 @@
 						{% for file in files %}
 							<tr>
 								<td class="filename" data-label="Filename">{{ file.original_filename|truncatechars:50 }}</td>
-								<td class="description" data-label="Description">{{ file.description|default:"—" }}</td>
+								<td class="description" data-label="Description">{{ file.description|default:"—"|truncatechars:50 }}</td>
 								<td data-label="Uploaded">{{ file.uploaded_at|date:"M j, Y g:i A" }}</td>
 								<td data-label="Actions">
 									<div class="actions">

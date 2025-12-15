@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Choose Storage Provider</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+			--bg: #0f172a;
+			--fg: #f8fafc;
+			--card-bg: rgba(15, 23, 42, 0.85);
+			--accent: #38bdf8;
+			--accent-hover: #0ea5e9;
+			--muted: #94a3b8;
+			font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+			color: var(--fg);
+		}
+
+		.container {
+			width: min(520px, 92vw);
+			padding: 2.5rem;
+			background: var(--card-bg);
+			border: 1px solid rgba(148, 163, 184, 0.2);
+			border-radius: 1rem;
+			box-shadow: 0 18px 40px rgba(15, 23, 42, 0.4);
+			backdrop-filter: blur(12px);
+		}
+
+		h1 {
+			font-size: 1.75rem;
+			margin: 0 0 0.5rem;
+			font-weight: 700;
+		}
+
+		p.lead {
+			margin: 0 0 2rem;
+			color: var(--muted);
+			line-height: 1.5;
+		}
+
+		.options {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+			margin-bottom: 2rem;
+		}
+
+		.option-btn {
+			display: block;
+			padding: 1.25rem 1.5rem;
+			background: rgba(15, 23, 42, 0.5);
+			border: 1px solid rgba(148, 163, 184, 0.3);
+			border-radius: 0.75rem;
+			text-decoration: none;
+			color: var(--fg);
+			transition: all 0.2s ease;
+		}
+
+		.option-btn:hover,
+		.option-btn:focus-visible {
+			border-color: var(--accent);
+			background: rgba(56, 189, 248, 0.1);
+		}
+
+		.option-title {
+			font-size: 1.1rem;
+			font-weight: 600;
+			margin: 0 0 0.25rem;
+		}
+
+		.option-description {
+			margin: 0;
+			font-size: 0.9rem;
+			color: var(--muted);
+			line-height: 1.4;
+		}
+
+		.secondary-link {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5rem;
+			color: var(--accent);
+			font-weight: 600;
+			text-decoration: none;
+		}
+
+		.secondary-link:hover,
+		.secondary-link:focus-visible {
+			color: var(--accent-hover);
+		}
+
+		@media (max-width: 520px) {
+			.container {
+				padding: 2rem 1.5rem;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Create Storage Provider</h1>
+		<p class="lead">Select the type of storage provider you want to create.</p>
+
+		<div class="options">
+			<a href="#" class="option-btn">
+				<div class="option-title">Discord Webhook Provider (recommended)</div>
+				<div class="option-description">Uses a webhook URL for simplified uploads without requiring bot permissions.</div>
+			</a>
+
+			<a href="#" class="option-btn">
+				<div class="option-title">Discord Bot Provider</div>
+				<div class="option-description">Uses a Discord bot with full API access to create threads and manage uploads.</div>
+			</a>
+		</div>
+
+		<a class="secondary-link" href="{% url 'files:list' %}">← Back to my files</a>
+	</div>
+</body>
+</html>
