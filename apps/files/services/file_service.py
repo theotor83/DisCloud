@@ -1,4 +1,5 @@
 import logging
+import hashlib
 from apps.files.models import File
 from apps.files.services.encryption_service import EncryptionService
 from apps.files.services.storage_service import StorageService
@@ -104,9 +105,12 @@ class FileService:
             logger.info(f"Created file record in database: {file_instance.id} ({filename})")
 
             chunk_number = 1
+            sha256_hash = hashlib.sha256()
 
             for streamed_chunk in file_stream.chunks(chunk_size=chunk_size):
                 logger.debug(f"Processing chunk {chunk_number} for file: {filename} (size: {len(streamed_chunk)} bytes)")
+                
+                sha256_hash.update(streamed_chunk)
                 
                 encrypted_chunk = self._encryption_service.encrypt_chunk(
                     streamed_chunk,
@@ -126,7 +130,12 @@ class FileService:
                 chunk_number += 1
 
             total_chunks = chunk_number - 1
-            logger.info(f"Successfully uploaded file: {file_instance.id} ({filename}) with {total_chunks} chunks")
+            
+            # Update file with SHA256 signature
+            sha256_signature = sha256_hash.hexdigest()
+            self.file_repository.update_file(file_instance.id, sha256_signature=sha256_signature)
+            
+            logger.info(f"Successfully uploaded file: {file_instance.id} ({filename}) with {total_chunks} chunks. SHA256: {sha256_signature}")
             return file_instance
             
         except Exception as e:

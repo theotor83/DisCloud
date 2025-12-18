@@ -9,7 +9,7 @@ class BaseFileRepository(ABC):
     """
 
     @abstractmethod
-    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context):
+    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context, sha256_signature=None):
         """
         Creates and returns a new File object.
         """
@@ -65,7 +65,7 @@ class FileRepositoryDjango(BaseFileRepository):
     Encapsulates all database interactions related to files and their chunks.
     """
 
-    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context):
+    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context, sha256_signature=None):
         """
         Creates and returns a new File object.
         """
@@ -75,7 +75,8 @@ class FileRepositoryDjango(BaseFileRepository):
             description=description,
             encryption_key=encryption_key,
             storage_provider=storage_provider,
-            storage_context=storage_context
+            storage_context=storage_context,
+            sha256_signature=sha256_signature
         )
         return file_instance
 
