@@ -98,7 +98,7 @@ def download_file(request, file_id):
         file_repository,
         storage_service=StorageService(file_instance.storage_provider.name), # Dynamically create based on file's provider
         encryption_service=EncryptionService(encryption_key)
-        )
+    )
 
     
     logger.info(f"Creating streaming response for file: {file_instance.id}")
