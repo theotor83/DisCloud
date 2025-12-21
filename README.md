@@ -14,7 +14,7 @@ Please note the following before experimenting:
 
 Issues, questions, or contributions are welcome via the project’s GitHub Issues and Pull Requests. Use common sense and act responsibly when experimenting with external platforms.
 
-Also note that this project is still in very early development. The core functionality is working, but many features still need to be implemented or improved (i.e. make the frontend better as it is currently made by AI, make everything accessible through the web UI...).
+Also note that this project is still in very early development. The core functionality is working, but many features still need to be implemented or improved (i.e. make the frontend better as it is currently made by AI, make everything accessible through the web UI...). It is also meant for local/self‑hosted use only at this time (no deployment instructions yet). I might fork this project later to make a hosted version.
 
 ---
 
@@ -96,6 +96,7 @@ Pluggable storage backends:
 
 - Python 3.10 or higher
 - Discord Bot Token (for Discord storage provider)
+- Discord Webhook URL (for Discord Webhooks storage provider)
 - Git
 
 ### Step 1: Clone the Repository
@@ -239,17 +240,20 @@ Visit `/admin/` to manage files, chunks, and storage providers.
 
 ## Storage Providers
 
+**Features:**
+- Pluggable architecture for multiple storage backends
+- Each provider implements upload/download logic and chunk size limits
+- Easy to add new providers by extending `BaseStorageProvider`
+
 ### Currently Supported
 
 #### 1. **Discord** (`DiscordStorageProvider`)
 
-Stores file chunks as Discord message attachments.
-
-**Features:**
-- Public thread creation for organization
+- Stores file chunks as Discord message attachments, sent from a bot user
+- Uses public thread creation for organization
 - 8 MB chunks (safe for Discord's 10 MB limit)
 - Automatic retry on rate limits
-- Message ID tracking for retrieval
+- Uses thread ID and message ID tracking for retrieval
 
 **Configuration:**
 ```python
@@ -261,7 +265,28 @@ Stores file chunks as Discord message attachments.
 }
 ```
 
+#### 2. **Discord Webhooks** (`DiscordWebhooksStorageProvider`)
+
+- Stores file chunks using Discord webhooks for upload
+- Much easier to set up, no bot required
+- However, lacks organization features of the bot-based provider (no thread creation, which leads to clutter in the channel)
+- Same chunk size and rate limit handling as Discord provider
+- Automatic retry on rate limits
+- Uses webhook URLs for retrieval
+
+**Configuration:**
+```python
+{
+    "webhook_url": "your_discord_webhook_url",
+    "max_chunk_size": "8388640", # Optional, defaults to 8MB
+}
+```
+
+**Features:**
+
 ### Adding a New Provider
+
+Let's say you want to add a new storage provider to support Telegram. Here’s an overview of the steps involved:
 
 **Step 1:** Create provider class in `apps/storage_providers/providers/`
 
