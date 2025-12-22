@@ -45,6 +45,13 @@ class BaseFileRepository(ABC):
         pass
 
     @abstractmethod
+    def change_file_status(self, file_id, new_status):
+        """
+        Updates the status field of a File object.
+        """
+        pass
+
+    @abstractmethod
     def create_chunk(self, file_instance, chunk_order, chunk_ref):
         """
         Creates and returns a new Chunk object associated with the given File.
@@ -76,7 +83,8 @@ class FileRepositoryDjango(BaseFileRepository):
             encryption_key=encryption_key,
             storage_provider=storage_provider,
             storage_context=storage_context,
-            sha256_signature=sha256_signature
+            sha256_signature=sha256_signature,
+            status='PENDING'
         )
         return file_instance
 
@@ -104,6 +112,15 @@ class FileRepositoryDjango(BaseFileRepository):
         Deletes a File object by its ID.
         """
         File.objects.filter(pk=file_id).delete()
+
+    def change_file_status(self, file_id, new_status):
+        """
+        Updates the status field of a File object.
+        Will raise an error if the new_status is not a valid choice.
+        """
+        if new_status not in ['PENDING', 'COMPLETED', 'FAILED', 'ERROR']:
+            raise ValueError(f"Invalid status: {new_status}")
+        File.objects.filter(pk=file_id).update(status=new_status)
 
     def create_chunk(self, file_instance, chunk_order, chunk_ref):
         """

@@ -13,6 +13,7 @@ class File(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     storage_provider = models.ForeignKey('storage_providers.StorageProvider', on_delete=models.PROTECT)
     storage_context = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=50, default='PENDING') # e.g., 'PENDING', 'COMPLETED', 'FAILED', 'ERROR'
 
     class Meta:
         verbose_name = "File"
