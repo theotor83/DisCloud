@@ -9,7 +9,7 @@ class BaseFileRepository(ABC):
     """
 
     @abstractmethod
-    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context, sha256_signature=None):
+    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context, client_signature=None):
         """
         Creates and returns a new File object.
         """
@@ -19,6 +19,13 @@ class BaseFileRepository(ABC):
     def get_file(self, file_id):
         """
         Retrieves a File object by its ID.
+        """
+        pass
+
+    @abstractmethod
+    def get_files_with_signature(self, client_signature):
+        """
+        Retrieves all File objects with the given client signature.
         """
         pass
 
@@ -66,13 +73,16 @@ class BaseFileRepository(ABC):
         pass
 
 
+
+
+
 class FileRepositoryDjango(BaseFileRepository):
     """
     Django ORM implementation of the BaseFileRepository.
     Encapsulates all database interactions related to files and their chunks.
     """
 
-    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context, sha256_signature=None):
+    def create_file(self, original_filename, encrypted_filename, description, encryption_key, storage_provider, storage_context, client_signature=None):
         """
         Creates and returns a new File object.
         """
@@ -83,7 +93,7 @@ class FileRepositoryDjango(BaseFileRepository):
             encryption_key=encryption_key,
             storage_provider=storage_provider,
             storage_context=storage_context,
-            sha256_signature=sha256_signature,
+            client_signature=client_signature,
             status='PENDING'
         )
         return file_instance
@@ -93,6 +103,12 @@ class FileRepositoryDjango(BaseFileRepository):
         Retrieves a File object by its ID.
         """
         return File.objects.get(pk=file_id)
+
+    def get_files_with_signature(self, client_signature):
+        """
+        Retrieves all File objects with the given client signature.
+        """
+        return File.objects.filter(client_signature=client_signature)
 
     def list_files(self):
         """

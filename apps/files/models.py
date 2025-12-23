@@ -9,7 +9,7 @@ class File(models.Model):
     encrypted_filename = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     encryption_key = models.BinaryField() # Store the unique encryption key for this file
-    sha256_signature = models.CharField(max_length=64, blank=True, null=True) # Maybe unique=True ? For now, will allow duplicates, and will also be used to see if file upload was incomplete
+    client_signature = models.CharField(max_length=64, blank=True, null=True) # Maybe unique=True ? For now, will allow duplicates, and will also be used to see if file upload was incomplete
     uploaded_at = models.DateTimeField(auto_now_add=True)
     storage_provider = models.ForeignKey('storage_providers.StorageProvider', on_delete=models.PROTECT)
     storage_context = models.JSONField(default=dict, blank=True)

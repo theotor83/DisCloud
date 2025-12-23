@@ -223,6 +223,7 @@
 
 		<form method="post" enctype="multipart/form-data">
 			{% csrf_token %}
+			<input type="hidden" name="file_signature" id="id_file_signature">
 			
 			<div class="field">
 				<label for="id_uploaded_file">{{ form.uploaded_file.label }}</label>
@@ -253,5 +254,22 @@
 
 		<a class="secondary-link" href="{% url 'files:list' %}">← Back to my files</a>
 	</div>
+
+	<script>
+		// Generate a client file signature before form submission (for resuming incomplete uploads)
+		document.querySelector('form').addEventListener('submit', function(e) {
+			const fileInput = document.getElementById('id_uploaded_file');
+			const signatureInput = document.getElementById('id_file_signature');
+			
+			if (fileInput && fileInput.files.length > 0) {
+				const file = fileInput.files[0];
+				// Format: filename-size-lastModified
+				// Example: video.mp4-10737418240-1693345678901
+				const signature = `${file.name}-${file.size}-${file.lastModified}`;
+				signatureInput.value = signature;
+				console.log('Generated file signature:', signature);
+			}
+		});
+	</script>
 </body>
 </html>
