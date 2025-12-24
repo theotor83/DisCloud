@@ -23,6 +23,7 @@ def upload_file(request):
             uploaded_file = form.cleaned_data['uploaded_file']
             description = form.cleaned_data['description']
             storage_provider = form.cleaned_data['storage_provider']
+            signature = request.POST.get('file_signature') # Hidden form field
             
             logger.info(f"Starting upload for file: {uploaded_file.name} using storage provider: {storage_provider.name}")
             
@@ -43,7 +44,8 @@ def upload_file(request):
                     storage_provider_name=storage_provider.name,
                     chunk_size=storage_service.get_max_chunk_size(),
                     storage_provider_repository=StorageProviderRepositoryDjango(),
-                    description=description
+                    description=description,
+                    client_signature=signature
                 )
                 logger.info(f"File uploaded successfully! File ID: {result.id}")
                 messages.success(request, f'File "{uploaded_file.name}" uploaded successfully!')

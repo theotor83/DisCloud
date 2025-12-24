@@ -76,11 +76,13 @@ class FileService:
     def upload_file(self, file_stream: UploadedFile, filename: str,
                     storage_provider_name: str, chunk_size: int, 
                     storage_provider_repository: BaseStorageProviderRepository,
-                    description: str = "") -> File:
+                    description: str = "", client_signature: str = "") -> File:
         """
         Orchestrates: chunk reading -> encrypt -> store -> save DB records
         """
         logger.info(f"Starting file upload: {filename} (chunk_size: {chunk_size} bytes)")
+        if client_signature == "":
+            logger.warning("No client_signature provided for file upload! This file cannot be resumed if interrupted, and cannot check for pending uploads.")
         
         try:
             encryption_key = self._encryption_service.key
