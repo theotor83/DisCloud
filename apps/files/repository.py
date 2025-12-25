@@ -59,6 +59,15 @@ class BaseFileRepository(ABC):
         pass
 
     @abstractmethod
+    def find_pending_file(self, client_signature):
+        """
+        Finds a File object with the given client signature that is in 'PENDING' status.
+        Returns None if no such file exists.
+        If multiple files match, returns the one with the biggest number of chunks.
+        """
+        pass
+
+    @abstractmethod
     def create_chunk(self, file_instance, chunk_order, chunk_ref):
         """
         Creates and returns a new Chunk object associated with the given File.
@@ -69,6 +78,13 @@ class BaseFileRepository(ABC):
     def list_chunks(self, file_instance):
         """
         Returns a queryset or list of all Chunk objects associated with the given File.
+        """
+        pass
+
+    @abstractmethod
+    def get_chunk_orders(self, file_instance):
+        """
+        Returns a list of chunk orders (integers) for the given File.
         """
         pass
 
@@ -138,6 +154,35 @@ class FileRepositoryDjango(BaseFileRepository):
             raise ValueError(f"Invalid status: {new_status}")
         File.objects.filter(pk=file_id).update(status=new_status)
 
+    def find_pending_file(self, client_signature):
+        """
+        Finds a File object with the given client signature that is in 'PENDING' status.
+        Returns None if no such file exists.
+        If multiple files match, returns the one with the biggest number of chunks.
+        """
+        try:
+            files = File.objects.filter(client_signature=client_signature, status='PENDING')
+            if not files.exists():
+                return None
+            
+            if files.count() == 1:
+                return files.first()
+            
+            # If multiple, return the one with the most chunks
+            max_chunk_count = -1
+            selected_file = None
+
+            for file in files:
+                chunk_count = self.list_chunks(file).count()
+                if chunk_count > max_chunk_count:
+                    max_chunk_count = chunk_count
+                    selected_file = file
+
+            return selected_file
+        
+        except File.DoesNotExist:
+            return None
+
     def create_chunk(self, file_instance, chunk_order, chunk_ref):
         """
         Creates and returns a new Chunk object associated with the given File.
@@ -154,3 +199,9 @@ class FileRepositoryDjango(BaseFileRepository):
         Returns a queryset of all Chunk objects associated with the given File.
         """
         return file_instance.chunks.all()
+    
+    def get_chunk_orders(self, file_instance):
+        """
+        Returns a list of chunk orders (integers) for the given File.
+        """
+        return list(file_instance.chunks.values_list('chunk_order', flat=True))

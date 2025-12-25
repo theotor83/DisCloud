@@ -83,36 +83,55 @@ class FileService:
         logger.info(f"Starting file upload: {filename} (chunk_size: {chunk_size} bytes)")
         if client_signature == "":
             logger.warning("No client_signature provided for file upload! This file cannot be resumed if interrupted, and cannot check for pending uploads.")
-        
+            file_pending = None
+        else:
+            file_pending = self.file_repository.find_pending_file(client_signature) # Could be named file_instance, but to avoid confusion when rereading code later
+
         try:
-            encryption_key = self._encryption_service.key
-            logger.debug(f"Generated encryption key for file: {filename}")
-            
-            # Prepare for the new File object in database
-            file_metadata = {"filename": filename}
-            storage_context = self._storage_service.prepare_storage(file_metadata)
-            logger.debug(f"Prepared storage metadata for file: {filename}")
+            if not file_pending: # New upload
+                encryption_key = self._encryption_service.key
+                logger.debug(f"Generated encryption key for file: {filename}")
+                
+                # Prepare for the new File object in database
+                file_metadata = {"filename": filename}
+                storage_context = self._storage_service.prepare_storage(file_metadata)
+                logger.debug(f"Prepared storage metadata for file: {filename}")
 
-            storage_provider_model = storage_provider_repository.get_provider_by_name(storage_provider_name)
+                storage_provider_model = storage_provider_repository.get_provider_by_name(storage_provider_name)
 
-            # Creation of the new File object
-            file_instance = self.file_repository.create_file(
-                filename,
-                filename, # Placeholder
-                description,
-                encryption_key,
-                storage_provider_model,
-                storage_context,
-            )
-            logger.info(f"Created file record in database: {file_instance.id} ({filename})")
+                # Creation of the new File object
+                file_instance = self.file_repository.create_file(
+                    filename,
+                    filename, # Placeholder
+                    description,
+                    encryption_key,
+                    storage_provider_model,
+                    storage_context,
+                    client_signature=client_signature
+                )
+                logger.info(f"Created file record in database: {file_instance.id} ({filename})")
+
+                existing_chunk_orders = []
+
+            else: # Resume unfinished upload
+                logger.info(f"Found existing pending file with signature {client_signature}, resuming upload: {file_pending.id} ({file_pending.original_filename})")
+                encryption_key = file_pending.encryption_key
+                self._encryption_service.key = encryption_key # TODO: change this design because it's not pretty. But for now it kinda works? Maybe there will be other issues later.
+                storage_context = file_pending.storage_context
+
+                existing_chunk_orders = self.file_repository.get_chunk_orders(file_pending)
+                logger.debug(f"Existing chunks for pending file: {existing_chunk_orders}")
 
             chunk_number = 1
-            sha256_hash = hashlib.sha256()
-
             for streamed_chunk in file_stream.chunks(chunk_size=chunk_size):
+                # First, check if this chunk was already uploaded
+                if chunk_number in existing_chunk_orders:
+                    logger.info(f"Skipping already uploaded chunk {chunk_number} for file: {filename}")
+                    chunk_number += 1
+                    continue
+
+
                 logger.debug(f"Processing chunk {chunk_number} for file: {filename} (size: {len(streamed_chunk)} bytes)")
-                
-                sha256_hash.update(streamed_chunk)
                 
                 encrypted_chunk = self._encryption_service.encrypt_chunk(
                     streamed_chunk,
@@ -133,11 +152,7 @@ class FileService:
 
             total_chunks = chunk_number - 1
             
-            # Update file with SHA256 signature
-            sha256_signature = sha256_hash.hexdigest()
-            self.file_repository.update_file(file_instance.id, sha256_signature=sha256_signature)
-            
-            logger.info(f"Successfully uploaded file: {file_instance.id} ({filename}) with {total_chunks} chunks. SHA256: {sha256_signature}")
+            logger.info(f"Successfully uploaded file: {file_instance.id} ({filename}) with {total_chunks} chunks. Client signature: {client_signature}")
             return file_instance
             
         except Exception as e:
