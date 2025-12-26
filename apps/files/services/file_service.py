@@ -151,7 +151,7 @@ class FileService:
                 chunk_number += 1
 
             total_chunks = chunk_number - 1
-            
+            self.file_repository.change_file_status(file_instance.id, 'COMPLETED')
             logger.info(f"Successfully uploaded file: {file_instance.id} ({filename}) with {total_chunks} chunks. Client signature: {client_signature}")
             return file_instance
             
