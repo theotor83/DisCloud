@@ -18,7 +18,7 @@ class File(models.Model):
     class Meta:
         verbose_name = "File"
         verbose_name_plural = "Files"
-        ordering = ['-uploaded_at']
+        ordering = ['-uploaded_at', '-id']
 
     def __str__(self):
         return f"{self.original_filename} ({self.uploaded_at.strftime('%Y-%m-%d %H:%M')})"

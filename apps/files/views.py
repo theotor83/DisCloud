@@ -1,6 +1,6 @@
 import logging
-from django.shortcuts import render, redirect
-from django.http import StreamingHttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import StreamingHttpResponse, Http404, HttpResponse
 from django.contrib import messages
 from .models import File
 from .repository import FileRepositoryDjango
@@ -92,7 +92,7 @@ def download_file(request, file_id):
         logger.info(f"Retrieved file: {file_instance.id}")
     except Exception as e:
         logger.error(f"Failed to retrieve file {file_id}: {str(e)}")
-        raise
+        raise Http404("File not found")
     
     encryption_key = file_instance.encryption_key
     logger.info("Initializing FileService for download...")
@@ -104,10 +104,14 @@ def download_file(request, file_id):
 
     
     logger.info(f"Creating streaming response for file: {file_instance.id}")
-    response = StreamingHttpResponse(file_service.get_decrypted_stream(file_instance))
-    response['Content-Disposition'] = f'attachment; filename="{file_instance.original_filename}"'
-    logger.info(f"Download initiated successfully for file: {file_instance.id}")
-    return response
+    try:
+        response = StreamingHttpResponse(file_service.get_decrypted_stream(file_instance))
+        response['Content-Disposition'] = f'attachment; filename="{file_instance.original_filename}"'
+        logger.info(f"Download initiated successfully for file: {file_instance.id}")
+        return response
+    except Exception as e:
+        logger.error(f"Failed to stream file {file_id}: {str(e)}")
+        return HttpResponse("Failed to download file.", status=500)
 
 def choose_provider(request):
     """
