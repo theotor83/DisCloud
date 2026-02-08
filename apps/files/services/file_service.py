@@ -6,6 +6,7 @@ from apps.files.services.storage_service import StorageService
 from django.core.files.uploadedfile import UploadedFile
 from apps.storage_providers.repository import BaseStorageProviderRepository
 from apps.files.repository import BaseFileRepository
+from apps.files.repository import FileRepositoryDjango
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,28 @@ class FileService:
         self._encryption_service = encryption_service
         
         logger.info(f"FileService initialized with provider: {self._storage_service.provider_name if self._storage_service else 'None'}")
+
+    @classmethod
+    def create(cls, provider_name: str='discord_default', encryption_key: bytes=None):
+        """
+        Factory method to create a FileService instance.
+        """
+        logger.info(f"Creating FileService with provider: {provider_name}")
+        return cls(
+            file_repository=FileRepositoryDjango(),
+            storage_service=StorageService(provider_name=provider_name),
+            encryption_service=EncryptionService(key=encryption_key) if encryption_key else EncryptionService()
+        )
+    
+    @classmethod
+    def for_file(cls, file_instance: File):
+        """
+        Factory to create a FileService configured for a specific existing File.
+        """
+        return cls.create(
+            provider_name=file_instance.storage_provider.name,
+            encryption_key=file_instance.encryption_key
+        )
 
     def get_decrypted_stream(self, file_instance: File):
         """
