@@ -5,8 +5,6 @@ from django.contrib import messages
 from .models import File
 from .repository import FileRepositoryDjango
 from .services.file_service import FileService
-from .services.storage_service import StorageService
-from .services.encryption_service import EncryptionService
 from apps.storage_providers.repository import StorageProviderRepositoryDjango
 from .forms import FileUploadForm
 
@@ -27,14 +25,8 @@ def upload_file(request):
             
             logger.info(f"Starting upload for file: {uploaded_file.name} using storage provider: {storage_provider.name}")
             
-            storage_service = StorageService(storage_provider.name)
-
             logger.info("Initializing FileService for upload...")
-            file_service = FileService(
-                file_repository=FileRepositoryDjango(),
-                storage_service=storage_service,
-                encryption_service=EncryptionService()
-            )
+            file_service = FileService.create(provider_name=storage_provider.name)
             logger.info("Initialized FileService.")
 
             try:
@@ -42,7 +34,7 @@ def upload_file(request):
                     file_stream=uploaded_file,
                     filename=uploaded_file.name,
                     storage_provider_name=storage_provider.name,
-                    chunk_size=storage_service.get_max_chunk_size(),
+                    chunk_size=file_service._storage_service.get_max_chunk_size(),
                     storage_provider_repository=StorageProviderRepositoryDjango(),
                     description=description,
                     client_signature=signature
@@ -94,13 +86,8 @@ def download_file(request, file_id):
         logger.error(f"Failed to retrieve file {file_id}: {str(e)}")
         raise Http404("File not found")
     
-    encryption_key = file_instance.encryption_key
     logger.info("Initializing FileService for download...")
-    file_service = FileService(
-        file_repository,
-        storage_service=StorageService(file_instance.storage_provider.name), # Dynamically create based on file's provider
-        encryption_service=EncryptionService(encryption_key)
-    )
+    file_service = FileService.for_file(file_instance)
 
     
     logger.info(f"Creating streaming response for file: {file_instance.id}")
