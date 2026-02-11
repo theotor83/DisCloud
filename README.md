@@ -222,18 +222,24 @@ Visit: `http://127.0.0.1:8000`
 ### Web Interface
 
 #### 1. Upload Files
-Navigate to `/upload/` and select a file to upload.
+Navigate to `/upload/` and select a file to upload. You can choose different storage providers from the dropdown menu.
 
-#### 2. View All Files
-Navigate to `/files/` to see all uploaded files with download links.
+#### 2. Resumable Uploads
+The system supports resuming interrupted uploads. If an upload fails or is interrupted:
+- The file's status remains `PENDING`.
+- Re-uploading the same file (determined by a client-side signature) will resume from the last successful chunk.
+- Once finished, the status changes to `COMPLETED`.
 
-#### 3. Download Files
+#### 3. View All Files
+Navigate to `/files/` to see all uploaded files with download links. Only `COMPLETED` files are shown in the main list.
+
+#### 4. Download Files
 Click download on any file. The system will:
 - Fetch encrypted chunks from storage provider
 - Decrypt chunks on-the-fly
 - Stream directly to your browser
 
-#### 4. Admin Interface
+#### 5. Admin Interface
 Visit `/admin/` to manage files, chunks, and storage providers.
 
 ---
@@ -265,7 +271,7 @@ Visit `/admin/` to manage files, chunks, and storage providers.
 }
 ```
 
-#### 2. **Discord Webhooks** (`DiscordWebhooksStorageProvider`)
+#### 2. **Discord Webhooks** (`DiscordWebhookStorageProvider`)
 
 - Stores file chunks using Discord webhooks for upload
 - Much easier to set up, no bot required
@@ -380,7 +386,8 @@ discloud/
 ├── templates/                      # HTML templates
 │   ├── upload.html
 │   ├── file_list.html
-│   └── file_detail.html
+│   ├── file_detail.html
+│   └── choose_provider.html
 │
 ├── manage.py                       # Django management script
 ├── pytest.ini                      # Pytest configuration
@@ -403,10 +410,14 @@ return iv + ciphertext  # IV prepended for independent decryption
 #### 2. **Streaming Decryption**
 
 ```python
-def get_decrypted_stream(self, file: File):
+def get_decrypted_stream(self, file_instance: File):
     """Generator yields decrypted chunks without loading entire file"""
-    for chunk in file.chunks.all().order_by('chunk_order'):
-        encrypted_data = self.storage_service.download_chunk(chunk.chunk_ref)
+    chunks = self.file_repository.list_chunks(file_instance).order_by('chunk_order')
+    for chunk in chunks:
+        encrypted_data = self.storage_service.download_chunk(
+            chunk.chunk_ref,
+            storage_context=file_instance.storage_context
+        )
         decrypted = self.encryption_service.decrypt_chunk(encrypted_data)
         yield decrypted
 ```
@@ -417,13 +428,25 @@ def get_decrypted_stream(self, file: File):
 # Abstract interface
 class BaseFileRepository(ABC):
     @abstractmethod
-    def create_file(self, **kwargs) -> File:
+    def create_file(self, original_filename, encrypted_filename, 
+                    description, encryption_key, storage_provider, 
+                    storage_context, client_signature=None) -> File:
         pass
 
 # Django implementation
 class FileRepositoryDjango(BaseFileRepository):
-    def create_file(self, **kwargs) -> File:
-        return File.objects.create(**kwargs)
+    def create_file(self, original_filename, encrypted_filename, 
+                    description, encryption_key, storage_provider, 
+                    storage_context, client_signature=None) -> File:
+        return File.objects.create(
+            original_filename=original_filename,
+            encrypted_filename=encrypted_filename,
+            description=description,
+            encryption_key=encryption_key,
+            storage_provider=storage_provider,
+            storage_context=storage_context,
+            client_signature=client_signature
+        )
 ```
 
 ---
@@ -494,36 +517,43 @@ Common fixtures in `conftest.py`:
 
 ### FileService
 
-Main service for file operations.
+Main service for file operations. Supports resumable uploads via client signatures.
 
 ```python
 class FileService:
     def upload_file(
         self,
-        file_stream: BinaryIO,
-        original_filename: str,
+        file_stream: UploadedFile,
+        filename: str,
+        storage_provider_name: str,
+        chunk_size: int,
+        storage_provider_repository: BaseStorageProviderRepository,
         description: str = "",
-        chunk_size: int = None
+        client_signature: str = ""
     ) -> File:
         """
-        Upload and encrypt a file.
+        Upload and encrypt a file. Supports resuming interrupted uploads 
+        if a `client_signature` is provided.
         
         Args:
-            file_stream: File-like object to upload
-            original_filename: Original name of the file
+            file_stream: UploadedFile object (from Django's request.FILES)
+            filename: Name of the file
+            storage_provider_name: Name of the provider to use
+            chunk_size: Size of chunks in bytes
+            storage_provider_repository: Repository to fetch provider data
             description: Optional file description
-            chunk_size: Chunk size in bytes (default: provider max)
+            client_signature: Unique hash to identify and resume this upload
         
         Returns:
-            File instance with encrypted chunks stored
+            File instance (status: 'COMPLETED' if successful)
         """
     
-    def get_decrypted_stream(self, file: File) -> Generator[bytes, None, None]:
+    def get_decrypted_stream(self, file_instance: File) -> Generator[bytes, None, None]:
         """
         Stream decrypted file chunks.
         
         Args:
-            file: File instance to download
+            file_instance: File instance to download
         
         Yields:
             Decrypted chunk bytes
