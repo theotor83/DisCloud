@@ -64,10 +64,27 @@ def file_list(request):
 def file_detail(request, file_id):
     """
     Displays the details of a specific file and allows for editing
-    the description and thumbnail.
+    the description.
     """
-    # Fetch file details and handle form submission for updates.
-    pass
+    file_repository = FileRepositoryDjango()
+    
+    try:
+        file_instance = file_repository.get_file(file_id)
+    except File.DoesNotExist:
+        logger.error(f"File with ID {file_id} not found.")
+        raise Http404("File not found")
+
+    if request.method == 'POST':
+        # For now, just the description.
+        description = request.POST.get('description', '')
+        file_repository.update_file(file_id, description=description) 
+        # Re-fetch the instance to show updated data
+        file_instance = file_repository.get_file(file_id)
+        
+        messages.success(request, 'File details updated successfully.')
+        return redirect('files:detail', file_id=file_id)
+
+    return render(request, 'file_detail.html', {'file': file_instance})
 
 def download_file(request, file_id):
     """
