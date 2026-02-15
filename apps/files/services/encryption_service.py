@@ -19,6 +19,29 @@ class EncryptionService:
     # AES block size is always 16 bytes
     BLOCK_SIZE = 16
 
+    @classmethod
+    def create_with_new_key(cls):
+        """
+        Factory method to create a service with a new random key.
+        
+        Returns:
+            EncryptionService: A new instance with a generated key.
+        """
+        return cls(key=None)
+
+    @classmethod
+    def create_from_key(cls, key):
+        """
+        Factory method to create a service with an existing key.
+        
+        Args:
+            key (bytes): The 32-byte encryption key to use.
+            
+        Returns:
+            EncryptionService: A new instance bound to the provided key.
+        """
+        return cls(key=key)
+
     def __init__(self, key=None):
         """
         Initialize the encryption service with a specific key.
