@@ -61,3 +61,19 @@ class BaseStorageProvider(ABC):
             The downloaded bytes of the chunk, supposedly encrypted.
         """
         pass
+
+class BaseStorageProviderValidator(ABC):
+    """
+    An abstract base class for validating storage provider configurations.
+    Each provider should implement its own validator that inherits from this class.
+    """
+
+    def __init__(self, config):
+        self.config = config
+        self.errors = []
+        self.warnings = []
+
+    @abstractmethod
+    def validate(self):
+        """Performs validation and populates errors and warnings."""
+        pass

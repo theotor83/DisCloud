@@ -1,10 +1,11 @@
 import re
 import logging
 import httpx
+from ..base import BaseStorageProviderValidator
 
 logger = logging.getLogger(__name__)
 
-class DiscordWebhookConfigValidator:
+class DiscordWebhookConfigValidator(BaseStorageProviderValidator):
     """
     Validates Discord Webhook storage provider configuration.
     

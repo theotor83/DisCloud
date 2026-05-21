@@ -1,7 +1,7 @@
 import httpx
 import logging
 
-from ..base import BaseStorageProvider
+from ..base import BaseStorageProvider, BaseStorageProviderValidator
 from .discord_webhook_validator import DiscordWebhookConfigValidator
 from apps.files.exceptions import StorageUploadError, StorageDownloadError
 
@@ -19,8 +19,9 @@ class DiscordWebhookStorageProvider(BaseStorageProvider):
         if not skip_validation:
             if not validator:
                 validator = DiscordWebhookConfigValidator(config)
-            #if not validator.validate():
-                #raise ValueError("Invalid Discord Webhook storage provider configuration")
+            if not isinstance(validator, BaseStorageProviderValidator):
+                logger.error("Provided validator is not an instance of BaseStorageProviderValidator")
+                raise ValueError("Provided validator must inherit from BaseStorageProviderValidator")
         
         # Initialize the Discord bot client using the provided config
         self.webhook_url = self.config.get('webhook_url')

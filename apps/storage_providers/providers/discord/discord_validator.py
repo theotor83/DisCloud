@@ -1,10 +1,11 @@
 import re
 import logging
 import httpx
+from ..base import BaseStorageProviderValidator
 
 logger = logging.getLogger(__name__)
 
-class DiscordConfigValidator:
+class DiscordConfigValidator(BaseStorageProviderValidator):
     """
     Validates Discord storage provider configuration.
     
